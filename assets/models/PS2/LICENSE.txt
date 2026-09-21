@@ -1,0 +1,11 @@
+PlayStation 2 by Smoggybeard
+Source: https://sketchfab.com/3d-models/playstation-2-8c992e9f5c86496ca7bd7dfe109d3cc2
+Creator: https://sketchfab.com/Smoggybeard
+License: CC Attribution-NonCommercial-ShareAlike
+http://creativecommons.org/licenses/by-nc-sa/4.0/
+Author must be credited. No commercial use. Modified versions must have the same license.
+
+Changes: Converted from glTF to the native mesh format; transforms baked, centered and uniformly scaled. Textures limited to 2048 pixels. Rendered with dEPTH studio lighting.
+Original GLB SHA-256: 2727ca3b173fde17c5b25c7940ee303e5d7d928b853ac52ed925f56c7128527a
+
+The modified assets remain licensed under CC BY-NC-SA 4.0.

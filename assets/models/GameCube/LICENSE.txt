@@ -1,0 +1,9 @@
+Low poly Nintendo Gamecube by LuisAR
+Source: https://sketchfab.com/3d-models/low-poly-nintendo-gamecube-34ca13c57463417b825cf72604eda75d
+Creator: https://sketchfab.com/LuisAR
+License: CC Attribution
+http://creativecommons.org/licenses/by/4.0/
+Author must be credited. Commercial use is allowed.
+
+Changes: Converted from glTF to the native mesh format; transforms baked, centered and uniformly scaled. Textures limited to 2048 pixels. Rendered with dEPTH studio lighting. Orientation / scene selection: {"excludeNames":["Ground","Controller"]}
+Original GLB SHA-256: 133da8e7bf8bca322de3acc96590c3b818f203bd4d05241c0e6ed4ee96272dd4

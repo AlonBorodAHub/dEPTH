@@ -1,0 +1,9 @@
+Nintendo Wii with controller by zombitt
+Source: https://sketchfab.com/3d-models/nintendo-wii-with-controller-09109eac340745beb1db96dd61a9e922
+Creator: https://sketchfab.com/zombitt
+License: CC Attribution
+http://creativecommons.org/licenses/by/4.0/
+Author must be credited. Commercial use is allowed.
+
+Changes: Converted from glTF to the native mesh format; transforms baked, centered and uniformly scaled. Textures limited to 2048 pixels. Rotated -90 degrees around Y for the initial presentation. Rendered with dEPTH studio lighting.
+Original GLB SHA-256: be5e446cd3d3c2a2eb6e7f5e599b35fb6a4e60d9ddb8b95560be06e821a74fb9

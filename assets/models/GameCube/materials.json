@@ -1,0 +1,80 @@
+[
+  {
+    "name": "material",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "textures": [
+      "texture-00.png",
+      "texture-03.png",
+      "texture-01.png",
+      "",
+      "texture-02.png"
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "Ground",
+    "base": [
+      0.6529438608844284,
+      0.14897901017813941,
+      0.0,
+      1.0
+    ],
+    "metal": 0.0,
+    "rough": 0.7042339212596509,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "Controller",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-04.png",
+      "texture-06.png",
+      "texture-05.png",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  }
+]

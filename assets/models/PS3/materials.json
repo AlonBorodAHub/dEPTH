@@ -1,0 +1,158 @@
+[
+  {
+    "name": "SideBack_Plastic",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-00.png",
+      "texture-02.png",
+      "texture-01.png",
+      "texture-01.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "Rubber_Feet",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-03.png",
+      "texture-05.png",
+      "texture-04.png",
+      "texture-04.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "Chrome_Silver",
+    "base": [
+      0.5124445944220491,
+      0.5124445944220491,
+      0.5124445944220491,
+      1.0
+    ],
+    "metal": 0.9258963695286042,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-06.png",
+      "texture-08.png",
+      "texture-07.png",
+      "texture-07.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "Main_Body_Plastic",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "textures": [
+      "texture-09.png",
+      "texture-12.png",
+      "texture-10.png",
+      "texture-10.png",
+      "texture-11.png"
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "Back_Ports",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "textures": [
+      "texture-13.png",
+      "texture-16.png",
+      "texture-14.png",
+      "texture-14.png",
+      "texture-15.png"
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "Playstation_Logo",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-17.png",
+      "texture-19.png",
+      "texture-18.png",
+      "texture-18.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  }
+]

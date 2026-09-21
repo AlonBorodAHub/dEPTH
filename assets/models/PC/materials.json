@@ -1,0 +1,288 @@
+[
+  {
+    "name": "Box002__0",
+    "base": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "metal": 0.0,
+    "rough": 0.6,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "12_-_Default",
+    "base": [
+      0.0,
+      0.0,
+      0.0,
+      0.3797637195
+    ],
+    "metal": 0.0,
+    "rough": 0.0,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "BLEND",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "04_-_Default",
+    "base": [
+      0.0077261006,
+      0.0077261006,
+      0.0077261006,
+      0.47
+    ],
+    "metal": 0.0,
+    "rough": 0.0,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "BLEND",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "07_-_Default",
+    "base": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "metal": 0.6907393293,
+    "rough": 0.2177972561,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "03_-_Default",
+    "base": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "metal": 0.0,
+    "rough": 0.8929713596,
+    "emissive": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "Material_26",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 0.0,
+    "rough": 0.8929713596,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-00.png",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "11_-_Default",
+    "base": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "metal": 0.0,
+    "rough": 0.7056021341000001,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "05_-_Default",
+    "base": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "metal": 0.0,
+    "rough": 0.8929713596,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "06_-_Default",
+    "base": [
+      0.2953043464,
+      0.2953043464,
+      0.2953043464,
+      1.0
+    ],
+    "metal": 1,
+    "rough": 0.10194359760000005,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "10_-_Default",
+    "base": [
+      0.0980392,
+      0.0980392,
+      0.0980392,
+      1.0
+    ],
+    "metal": 0.0,
+    "rough": 0.8929713596,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "08_-_Default",
+    "base": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "metal": 0.0,
+    "rough": 0.8929713596,
+    "emissive": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  }
+]

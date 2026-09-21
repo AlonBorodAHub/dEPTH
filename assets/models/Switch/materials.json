@@ -1,0 +1,106 @@
+[
+  {
+    "name": "RT_screen_tablet",
+    "base": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "metal": 0.475963555442059,
+    "rough": 0.00779022186551873,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "n_switch_joycon_R2",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 0.0,
+    "rough": 0.5185247675853808,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-00.png",
+      "texture-01.png",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "n_switch_joycon_L",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 0.0,
+    "rough": 0.5002842480953857,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-02.png",
+      "texture-03.png",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "n_switch_tablet",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 0.6218877113620196,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-04.png",
+      "texture-06.png",
+      "texture-05.png",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  }
+]

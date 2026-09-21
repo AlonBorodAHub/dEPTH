@@ -1,0 +1,11 @@
+Playstation 3 by Smoggybeard
+Source: https://sketchfab.com/3d-models/playstation-3-d3eb52c6cf144601a52c99f9be78dfec
+Creator: https://sketchfab.com/Smoggybeard
+License: CC Attribution-NonCommercial-ShareAlike
+http://creativecommons.org/licenses/by-nc-sa/4.0/
+Author must be credited. No commercial use. Modified versions must have the same license.
+
+Changes: Converted from glTF to the native mesh format; transforms baked, centered and uniformly scaled. Textures limited to 2048 pixels. Rendered with dEPTH studio lighting.
+Original GLB SHA-256: 3947aa3af545c256e8044e9d0da02c88c9434ba4f7a8c7421cb461b044b382af
+
+The modified assets remain licensed under CC BY-NC-SA 4.0.

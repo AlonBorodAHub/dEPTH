@@ -1,0 +1,5 @@
+using System;using System.Linq;using System.Reflection;
+class StartupGateChecks{
+[STAThread] static void Main(){var library=Storage.Load();foreach(string id in new[]{"546560","1265800","1250410"}){if(library.Games.Any(g=>g.SteamId==id)||library.IsGameVisible(new Game{SteamId=id,Platform="Steam"}))throw new Exception("Excluded game can reappear");}
+using(var w=new DepthWindow()){var f=BindingFlags.NonPublic|BindingFlags.Instance;typeof(DepthWindow).GetField("libraryMasked",f).SetValue(w,true);typeof(DepthWindow).GetMethod("UpdateHeadTracking",f).Invoke(w,new object[]{.016});var tracker=(HeadTracking)typeof(DepthWindow).GetField("headTracker",f).GetValue(w);if(tracker.Status!="Off")throw new Exception("Tracking must not activate the lenses before conversion");if((bool)typeof(DepthWindow).GetMethod("LibraryConversionReady",f).Invoke(w,null))throw new Exception("Missing conversion evidence must not release black");}
+Console.WriteLine("PASS: VR entries removed and excluded from scanning; masked startup does not start tracking; no conversion evidence keeps the gate closed.");}}

@@ -1,0 +1,9 @@
+Nintendo Switch by HarrisonHag1
+Source: https://sketchfab.com/3d-models/nintendo-switch-c73fadccfdc547f9958fd8a1cdbe4811
+Creator: https://sketchfab.com/HarrisonHag1
+License: CC Attribution
+http://creativecommons.org/licenses/by/4.0/
+Author must be credited. Commercial use is allowed.
+
+Changes: Converted from glTF to the native mesh format; transforms baked, centered and uniformly scaled. Textures limited to 2048 pixels. Rendered with dEPTH studio lighting. Orientation / scene selection: {"y":0}
+Original GLB SHA-256: 5c3f76bf7a6253b47ccbd3814b16add0fabe373965c69d344a91a488b8bf6820

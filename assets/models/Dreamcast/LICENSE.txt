@@ -1,0 +1,10 @@
+SEGA Dreamcast by elouisetrewartha
+Source: https://sketchfab.com/3d-models/sega-dreamcast-3d8db0dd2a5d4d159ab1e09323b4dc44
+Creator: https://sketchfab.com/etrewartha
+License: CC Attribution-NonCommercial
+http://creativecommons.org/licenses/by-nc/4.0/
+Author must be credited. No commercial use.
+
+Changes: Converted from glTF to the native mesh format; transforms baked, centered and uniformly scaled. Original material colors retained. This asset has no texture maps. Rendered with dEPTH studio lighting.
+Original GLB SHA-256: 5c5098ff84946bd3efad9403b5f9fe60c26f4229ff68800ae7ea50cf2111c955
+Additional changes: orange front triangle; curved subdivision and smooth normals on shell, lid and ports.

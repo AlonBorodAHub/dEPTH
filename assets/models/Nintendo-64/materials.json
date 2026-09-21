@@ -1,0 +1,418 @@
+[
+  {
+    "name": "cart_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-00.png",
+      "texture-02.png",
+      "texture-01.png",
+      "texture-01.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "power_cord",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-03.png",
+      "texture-05.png",
+      "texture-04.png",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "control_cord",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-06.png",
+      "texture-08.png",
+      "texture-07.png",
+      "texture-07.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "console_good_power_bank_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-09.png",
+      "texture-11.png",
+      "texture-10.png",
+      "texture-10.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "console_good_main_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-12.png",
+      "texture-14.png",
+      "texture-13.png",
+      "texture-13.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "console_good_legs_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-15.png",
+      "texture-17.png",
+      "texture-16.png",
+      "texture-16.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "console_good_connecter_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-18.png",
+      "texture-20.png",
+      "texture-19.png",
+      "texture-19.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "on_off_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-21.png",
+      "texture-23.png",
+      "texture-22.png",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "direction_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-24.png",
+      "texture-26.png",
+      "texture-25.png",
+      "texture-25.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "controller_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-27.png",
+      "texture-29.png",
+      "texture-28.png",
+      "texture-28.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "start_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-30.png",
+      "texture-32.png",
+      "texture-31.png",
+      "texture-31.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "B_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-33.png",
+      "texture-35.png",
+      "texture-34.png",
+      "texture-34.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "joystick_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-36.png",
+      "texture-38.png",
+      "texture-37.png",
+      "texture-37.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "yellow_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-39.png",
+      "texture-41.png",
+      "texture-40.png",
+      "texture-40.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "plug_in_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-42.png",
+      "texture-44.png",
+      "texture-43.png",
+      "texture-43.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "A_mat",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-45.png",
+      "texture-47.png",
+      "texture-46.png",
+      "texture-46.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  }
+]

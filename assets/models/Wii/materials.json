@@ -1,0 +1,54 @@
+[
+  {
+    "name": "material",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-00.png",
+      "texture-02.png",
+      "texture-01.png",
+      "texture-01.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "Controller",
+    "base": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "metal": 1,
+    "rough": 1,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "texture-03.png",
+      "texture-05.png",
+      "texture-04.png",
+      "texture-04.png",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  }
+]

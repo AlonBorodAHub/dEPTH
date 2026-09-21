@@ -1,0 +1,9 @@
+Nintendo 3DS XL by Keita-sama
+Source: https://sketchfab.com/3d-models/nintendo-3ds-xl-7ae615e8687a4030b4a24b30ad1425d7
+Creator: https://sketchfab.com/Keita-sama
+License: CC Attribution
+http://creativecommons.org/licenses/by/4.0/
+Author must be credited. Commercial use is allowed.
+
+Changes: Converted from glTF to the native mesh format; transforms baked, centered and uniformly scaled. Textures limited to 2048 pixels. Rendered with dEPTH studio lighting.
+Original GLB SHA-256: bd98fb1aadb4e8d9f238d0dffe0b1ca9510418a01ec7225d986a4c5c6c6032fd

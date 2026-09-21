@@ -1,0 +1,106 @@
+[
+  {
+    "name": "Dreamcast_White_Plastic",
+    "base": [
+      0.687,
+      0.687,
+      0.687,
+      1.0
+    ],
+    "metal": 0.0,
+    "rough": 0.6,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "Dreamcast_Grey",
+    "base": [
+      0.643,
+      0.631649,
+      0.610207,
+      1.0
+    ],
+    "metal": 0.0,
+    "rough": 0.6,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "Dreamcast_Black_Plastic",
+    "base": [
+      0.036,
+      0.036,
+      0.036,
+      1.0
+    ],
+    "metal": 0.0,
+    "rough": 0.9207483815999999,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  },
+  {
+    "name": "Dreamcast_Orange_Front_Triangle",
+    "base": [
+      1.0,
+      0.12,
+      0.005,
+      1.0
+    ],
+    "metal": 0.0,
+    "rough": 0.32,
+    "emissive": [
+      0,
+      0,
+      0
+    ],
+    "textures": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "alpha": "OPAQUE",
+    "cutoff": 0.5,
+    "normalScale": 1
+  }
+]
