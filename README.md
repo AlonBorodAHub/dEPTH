@@ -2,17 +2,17 @@
 
 A Windows game-library frontend for Samsung Odyssey 3D monitors. Browse floating cover art over a curved stereo grid, with rotating console models, a depth-animated opening, controller navigation, and optional head-tracked perspective.
 
-**v0.1.0-beta.1 — early public beta.** Developed and tested on one Odyssey 3D setup; broader hardware and emulator compatibility needs community testing. dEPTH renders side-by-side images. Samsung's Odyssey 3D Hub performs the display conversion. dEPTH does not turn arbitrary games into stereoscopic 3D.
+**v0.1.0-beta.2 — early public beta.** Developed and tested on one Odyssey 3D setup; broader hardware and emulator compatibility needs community testing. dEPTH renders side-by-side images. Samsung's Odyssey 3D Hub performs the display conversion. dEPTH does not turn arbitrary games into stereoscopic 3D.
 
 ## Download and start
 
-1. Download `dEPTH-v0.1.0-beta.1-win-x64.zip` from Releases and extract the entire archive into a writable folder, such as `C:\Games\dEPTH`. Do not run inside the ZIP or install into Program Files.
-2. Install and start Samsung Odyssey 3D Hub and its required display runtime. Confirm your Odyssey monitor works in 3D. Enable automatic SBS conversion in Hub. Make the Odyssey your primary display for this beta.
+1. Download `dEPTH-v0.1.0-beta.2-win-x64.zip` from Releases and extract the entire archive into a writable folder, such as `C:\Games\dEPTH`. Do not run inside the ZIP or install into Program Files.
+2. Install and start Samsung Odyssey 3D Hub and its required display runtime. Confirm your Odyssey monitor works in 3D. Run the included `Enable-Hub-Switching.cmd` once to enable automatic SBS only during dEPTH sessions, or manage Hub conversion manually. Make the Odyssey your primary display for this beta.
 3. Run `Depth.exe`. First-run setup asks for each system's existing emulator executable and game folder. Subfolders are scanned; your games can stay where they are. Steam scanning is optional and does not certify a game's 3D support.
 4. Choose **Save and scan**. The library starts black until Hub reports an active 3D session, then plays the opening animation.
 5. Run `Setup.cmd` while dEPTH is closed to add or change scan folders. Edited game profiles are preserved on rescans; removing a source does not delete previously imported games.
 
-No installer or administrator rights are required for dEPTH. Windows x64, .NET Framework 4.8, an OpenGL-capable graphics driver, and a working Odyssey 3D Hub installation are required. Samsung/Leia runtimes are not bundled. The executable is unsigned.
+The frontend is portable and does not require administrator rights. The optional Hub switching helper requires one administrator approval and installs a background task at Windows sign-in. Windows x64, .NET Framework 4.8, an OpenGL-capable graphics driver, and a working Odyssey 3D Hub installation are required. Samsung/Leia runtimes are not bundled. The executable is unsigned.
 
 No games, ROMs, firmware, BIOS, console keys, emulators, personal library, saved states, or game artwork are included. Supply your own lawful game files and existing emulator installations. Keep `SDL2.dll` and the `data/models` folder beside `Depth.exe`.
 
@@ -30,7 +30,15 @@ No games, ROMs, firmware, BIOS, console keys, emulators, personal library, saved
 
 Other systems can be added manually through **Settings → Add game**, with an executable and arguments. `{rom}` is replaced with the quoted game path. Test each emulator's 3D output independently before launching it through dEPTH.
 
-This beta does not automatically configure emulators, install stereo modifications, change global Hub settings, or apply widescreen hacks. Emulators retain responsibility for game saves and stereo output. Launching Dolphin supplies session-only fullscreen and stop-confirmation options.
+This beta does not automatically configure emulators, install stereo modifications, or apply widescreen hacks. The optional helper changes Hub conversion settings during dEPTH sessions. Emulators retain responsibility for game saves and stereo output. Launching Dolphin supplies session-only fullscreen and stop-confirmation options.
+
+## Automatic Hub switching
+
+Run `Enable-Hub-Switching.cmd` once from the extracted application folder and accept the Windows administrator prompt. The helper enables automatic SBS and suppresses Hub's conversion popup while dEPTH runs. After dEPTH exits, including a crash, it disables automatic conversion and restores the popup for normal PC video. It preserves automatic SBS across internal process replacements when returning from games.
+
+This optional integration was tested with **Odyssey 3D Hub 1.5.1** and uses its internal settings connection; future Hub versions may require updates. It installs `dEPTH Hub Session` in Task Scheduler and the helper in `Program Files\dEPTH`. The frontend and games remain unelevated. Use the same administrator account for setup and playing; elevation using a different user's credentials is not supported.
+
+Run enable again if you move or upgrade dEPTH into another folder. To remove the integration, close dEPTH and run `Disable-Hub-Switching.cmd`. This removes its scheduled task and retains the helper files. The latest status is in `Program Files\dEPTH\HubSessionStatus.txt`. If the helper cannot connect, check Hub is running; manual conversion remains available. Build the helper and run its unit checks with `build-hub-session.ps1` when building from source.
 
 ## Controls
 
