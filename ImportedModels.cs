@@ -89,7 +89,7 @@ public sealed partial class GpuRenderer {
   glDepthMask(1);useProgram(0);activeTexture(0x84C0);EndConsole();glPopMatrix();return true;
  }
  public void SpatialTitle(float eye,float aspect,float depth,int x,int width,int height){
-  PrepareTitle();glViewport(x,0,width,height);glMatrixMode(0x1700);glPushMatrix();glLoadIdentity();glScalef(110,110,110);glTranslatef(-titleWidth/2,-.36f,0);BeginConsole();ModelSettings(0,eye,aspect,depth,470,1,true);glColor4f(1,1,1,1);foreach(char c in "dEPTH")glCallList(titleLists+c-32);useProgram(0);EndConsole();glPopMatrix();
+  PrepareTitle();float em=Math.Min(110,1000*aspect*(900-depth-14)/900/Math.Max(.1f,titleWidth));glViewport(x,0,width,height);glMatrixMode(0x1700);glPushMatrix();glLoadIdentity();glScalef(em,em,em);glTranslatef(-titleWidth/2,-.36f,0);BeginConsole();ModelSettings(0,eye,aspect,depth,470,1,true);glColor4f(1,1,1,1);foreach(char c in "dEPTH")glCallList(titleLists+c-32);useProgram(0);EndConsole();glPopMatrix();
  }
  void DisposeImportedModels(){foreach(var model in importedModels.Values)foreach(var batch in model.Batches){if(batch.VertexBuffer!=0)deleteBuffers(1,ref batch.VertexBuffer);if(batch.IndexBuffer!=0)deleteBuffers(1,ref batch.IndexBuffer);}importedModels.Clear();foreach(var image in modelImages.Values)image.Dispose();modelImages.Clear();filteredModelTextures.Clear();if(modelProgram!=0){deleteProgram(modelProgram);modelProgram=0;}}
 }

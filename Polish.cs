@@ -39,7 +39,7 @@ public partial class DepthWindow {
   const int rate=22050;int n=(int)(rate*(select?.105:.045));var stream=new MemoryStream();
   var writer=new BinaryWriter(stream);writer.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));writer.Write(36+n*2);writer.Write(System.Text.Encoding.ASCII.GetBytes("WAVEfmt "));
   writer.Write(16);writer.Write((short)1);writer.Write((short)1);writer.Write(rate);writer.Write(rate*2);writer.Write((short)2);writer.Write((short)16);writer.Write(System.Text.Encoding.ASCII.GetBytes("data"));writer.Write(n*2);
-  for(int i=0;i<n;i++){double t=i/(double)rate,envelope=Math.Pow(Math.Sin(Math.PI*i/(n-1)),2)*Math.Exp(-3.0*i/n);double wave=Math.Sin(2*Math.PI*(select?660:480)*t);if(select)wave=.7*wave+.3*Math.Sin(2*Math.PI*880*t);writer.Write((short)(wave*envelope*1100));}
+  for(int i=0;i<n;i++){double t=i/(double)rate,envelope=Math.Pow(Math.Sin(Math.PI*i/(n-1)),2)*Math.Exp(-3.0*i/n);double wave=Math.Sin(2*Math.PI*(select?660:480)*t);if(select)wave=.7*wave+.3*Math.Sin(2*Math.PI*880*t);writer.Write((short)(wave*envelope*3300));}
   writer.Flush();stream.Position=0;return stream;
  }
  void UiSound(bool select){
@@ -76,7 +76,7 @@ public partial class DepthWindow {
     float disparity=StereoMath.Parallax(Eye(eye,count),z);
     float em=ClientSize.Height*.11f*scale,cx=eye*width+width/2+disparity*width/1440,cy=ClientSize.Height/2f;
     if(gpu!=null){gpu.Clip((int)(eye*width),0,(int)width,ClientSize.Height);gpu.SpatialTitle(Eye(eye,count),ClientSize.Width*940f/(ClientSize.Height*1440f),z,(int)(eye*width),(int)width,ClientSize.Height);}
-    else{var state=g.Save();g.SetClip(new RectangleF(eye*width,0,width,ClientSize.Height));g.SmoothingMode=SmoothingMode.AntiAlias;var bounds=openingTitle.GetBounds();g.TranslateTransform(cx,cy);g.ScaleTransform(em/count,em);g.TranslateTransform(-bounds.X-bounds.Width/2,-bounds.Y-bounds.Height/2);g.FillPath(Brushes.White,openingTitle);g.Restore(state);}
+    else{var state=g.Save();g.SetClip(new RectangleF(eye*width,0,width,ClientSize.Height));g.SmoothingMode=SmoothingMode.AntiAlias;var bounds=openingTitle.GetBounds();em=Math.Min(em,width*.72f*count/Math.Max(.1f,bounds.Width));g.TranslateTransform(cx,cy);g.ScaleTransform(em/count,em);g.TranslateTransform(-bounds.X-bounds.Width/2,-bounds.Y-bounds.Height/2);g.FillPath(Brushes.White,openingTitle);g.Restore(state);}
    }
    if(gpu!=null){gpu.EndClip();gpu.Begin(ClientSize.Width,ClientSize.Height);}
    float fade=Smooth((t-.82f)/.18f);if(fade>0)PaintOpeningGrid(g,curvature,fade);
@@ -86,5 +86,5 @@ public partial class DepthWindow {
   if(startupOpening&&libraryMasked)PrepareOpeningAssets();
  }
  public static float Smooth(float progress){float t=Math.Max(0,Math.Min(1,progress));return t*t*t*(t*(t*6-15)+10);}
- public static float IntroDepth(float progress){return 375*Smooth(progress/.82f);}
+ public static float IntroDepth(float progress){return 600*Smooth(progress/.82f);}
 }

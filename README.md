@@ -2,11 +2,11 @@
 
 A Windows game-library frontend for Samsung Odyssey 3D monitors. Browse floating cover art over a curved stereo grid, with rotating console models, a depth-animated opening, controller navigation, and optional head-tracked perspective.
 
-**v0.1.0-beta.2 — early public beta.** Developed and tested on one Odyssey 3D setup; broader hardware and emulator compatibility needs community testing. dEPTH renders side-by-side images. Samsung's Odyssey 3D Hub performs the display conversion. dEPTH does not turn arbitrary games into stereoscopic 3D.
+**v0.1.0-beta.3 — early public beta.** Developed and tested on one Odyssey 3D setup; broader hardware and emulator compatibility needs community testing. dEPTH renders side-by-side images. Samsung's Odyssey 3D Hub performs the display conversion. dEPTH does not turn arbitrary games into stereoscopic 3D.
 
 ## Download and start
 
-1. Download `dEPTH-v0.1.0-beta.2-win-x64.zip` from Releases and extract the entire archive into a writable folder, such as `C:\Games\dEPTH`. Do not run inside the ZIP or install into Program Files.
+1. Download `dEPTH-v0.1.0-beta.3-win-x64.zip` from Releases and extract the entire archive into a writable folder, such as `C:\Games\dEPTH`. Do not run inside the ZIP or install into Program Files.
 2. Install and start Samsung Odyssey 3D Hub and its required display runtime. Confirm your Odyssey monitor works in 3D. Run the included `Enable-Hub-Switching.cmd` once to enable automatic SBS only during dEPTH sessions, or manage Hub conversion manually. Make the Odyssey your primary display for this beta.
 3. Run `Depth.exe`. First-run setup asks for each system's existing emulator executable and game folder. Subfolders are scanned; your games can stay where they are. Steam scanning is optional and does not certify a game's 3D support.
 4. Choose **Save and scan**. The library starts black until Hub reports an active 3D session, then plays the opening animation.
@@ -15,6 +15,22 @@ A Windows game-library frontend for Samsung Odyssey 3D monitors. Browse floating
 The frontend is portable and does not require administrator rights. The optional Hub switching helper requires one administrator approval and installs a background task at Windows sign-in. Windows x64, .NET Framework 4.8, an OpenGL-capable graphics driver, and a working Odyssey 3D Hub installation are required. Samsung/Leia runtimes are not bundled. The executable is unsigned.
 
 No games, ROMs, firmware, BIOS, console keys, emulators, personal library, saved states, or game artwork are included. Supply your own lawful game files and existing emulator installations. Keep `SDL2.dll` and the `data/models` folder beside `Depth.exe`.
+
+## What is new in beta 3
+
+- A gyro-controlled blue star pointer for compatible Nintendo Switch Pro Controllers, including reliable controller handoff when entering and leaving Dolphin.
+- Smooth pointer hover scrolling, soft 3D selection lift and shadow, and a short depth-aware sparkle trail.
+- Improved keyboard navigation between game rows and platform tabs, an in-app Settings panel, and an About screen.
+- A curved, softened background grid, refined opening audio timing, and optional looping menu audio.
+- `Depth Record.exe`, which launches dEPTH in a visible raw side-by-side presentation and records the complete primary display with system audio to an MP4 on the Desktop.
+
+The public archive does not redistribute the copyrighted music and startup recordings used by the development installation. To use your own sounds, provide 16-bit PCM WAV files at `data/audio/startup.wav` and `data/audio/menu.wav`.
+
+## Recording a side-by-side demonstration
+
+Place a current Windows x64 `ffmpeg.exe` beside `Depth Record.exe`, or make FFmpeg available on `PATH`, then double-click `Depth Record.exe`. Recording begins one second after dEPTH launches and ends when dEPTH closes. The recorder saves a timestamped MP4 to the Desktop, including system audio. It keeps the frontend and launched emulators in raw side-by-side form so the captured wide video can be played later as 3D content.
+
+On NVIDIA systems, the recorder uses Desktop Duplication and NVENC to target constant 60 fps at the primary display's full resolution. Other systems fall back to Windows desktop capture and software H.264; sustained 4K60 performance is not guaranteed with the fallback. The mouse arrow is excluded from the recording. FFmpeg is a separate project and is not bundled.
 
 ## Systems and setup
 

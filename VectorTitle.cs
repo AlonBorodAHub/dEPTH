@@ -4,14 +4,18 @@ using System.Runtime.InteropServices;
 
 public sealed partial class GpuRenderer {
  [DllImport("opengl32.dll")]static extern void glMultMatrixf(float[] matrix);
- uint trackedGrid;
+ uint trackedGrid;float trackedCurvature=-1;
  public void OpeningGrid(float eye,float curvature,RectangleF pane,float alpha,float headY=0){
-  glDisable(0x0DE1);float a=48/255f*alpha;glColor4f(193/255f*a,240/255f*a,244/255f*a,a);glLineWidth(Math.Max(1,pane.Height/940));
-  if(curvature==1){
-   if(trackedGrid==0){trackedGrid=glGenLists(1);glNewList(trackedGrid,0x1300);for(int axis=0;axis<2;axis++)for(int n=-20;n<=20;n++){glBegin(3);for(int step=-40;step<=40;step++){float x=axis==0?n*130:step*65,y=axis==0?step*50:n*110,z=DepthWindow.GridDepth(x,y,1),k=900/(900-z);glVertex3f(720+x*k,470+y*k,1-k);}glEnd();}glEndList();}
-   glPushMatrix();glTranslatef(pane.X,pane.Y,0);glScalef(pane.Width/1440,pane.Height/940,1);glMultMatrixf(new float[]{1,0,0,0,0,1,0,0,eye,headY,1,0,0,0,0,1});glCallList(trackedGrid);glPopMatrix();return;
+  glDisable(0x0DE1);
+  // Cache each animated surface once, then reuse it for both eyes and the
+  // soft stroke layers. The title and interface remain sharp.
+  if(trackedGrid==0||trackedCurvature!=curvature){
+   if(trackedGrid==0)trackedGrid=glGenLists(1);trackedCurvature=curvature;
+   glNewList(trackedGrid,0x1300);for(int axis=0;axis<2;axis++)for(int n=-20;n<=20;n++){glBegin(3);for(int step=-40;step<=40;step++){float x=axis==0?n*130:step*65,y=axis==0?step*50:n*110,z=DepthWindow.GridDepth(x,y,curvature),k=900/(900-z);glVertex3f(720+x*k,470+y*k,1-k);}glEnd();}glEndList();
   }
-  for(int axis=0;axis<2;axis++)for(int n=-20;n<=20;n++){glBegin(3);for(int step=-40;step<=40;step++){float x=axis==0?n*130:step*65,y=axis==0?step*50:n*110,z=DepthWindow.GridDepth(x,y,curvature),k=900/(900-z);glVertex2f(pane.X+(720+x*k+eye*(1-k))*pane.Width/1440,pane.Y+(470+y*k)*pane.Height/940);}glEnd();}
+  glPushMatrix();glTranslatef(pane.X,pane.Y,0);glScalef(pane.Width/1440,pane.Height/940,1);glMultMatrixf(new float[]{1,0,0,0,0,1,0,0,eye,headY,1,0,0,0,0,1});
+  for(int layer=0;layer<3;layer++){float a=48/255f*alpha*DepthWindow.GridStrokeOpacity(layer);glColor4f(193/255f*a,240/255f*a,244/255f*a,a);glLineWidth(Math.Max(1,pane.Height/940)*DepthWindow.GridStrokeWidth(layer));glCallList(trackedGrid);}
+  glPopMatrix();
  }
  uint titleLists;float titleWidth;
  [StructLayout(LayoutKind.Sequential)] struct GlyphMetric {public float width,height,x,y,advanceX,advanceY;}

@@ -26,7 +26,7 @@ public partial class DepthWindow {
  CompanionWindow companion;Timer companionTimer;Game companionGame;string companionCover="";bool companionDim;Bitmap companionBackground;bool companionBuildBusy;Game companionFrameGame;string companionFrameCover="";Size companionFrameSize;
  long companionRevealSince=-1;float lastCompanionAlpha=-1;
  bool CompanionOpeningBlocked {get{return startupOpening||libraryMasked||introSince>=0||revealSince>=0;}}
- float CompanionAlpha(){return CompanionOpeningBlocked||AzaharPlaying()||secondaryReturnCurtain!=null||companionRevealSince<0?0:Smooth((frameClock.ElapsedMilliseconds-companionRevealSince)/4000f);}
+ float CompanionAlpha(){return CompanionOpeningBlocked||AzaharPlaying()||secondaryReturnCurtain!=null||companionRevealSince<0?0:Smooth((frameClock.ElapsedMilliseconds-companionRevealSince)/1000f);}
  void InitializeCompanion(){companionTimer=new Timer{Interval=33};companionTimer.Tick+=(s,e)=>{long stamp=FrameTiming.Start();try{UpdateCompanion();}finally{FrameTiming.End("companion update",stamp);}};companionTimer.Start();}
  void DisposeCompanion(){if(companionTimer!=null)companionTimer.Dispose();if(companion!=null)companion.Dispose();var frames=new HashSet<Bitmap>(companionFrames.Values);if(companionBackground!=null)frames.Add(companionBackground);foreach(var frame in frames)frame.Dispose();companionFrames.Clear();}
  bool AzaharPlaying(){return activeGame!=null&&string.Equals(System.IO.Path.GetFileNameWithoutExtension(activeGame.Executable),"azahar",StringComparison.OrdinalIgnoreCase);}
