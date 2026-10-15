@@ -15,6 +15,19 @@ public static class StereoProfiles {
  public static void Save(Dictionary<string,StereoProfile> profiles){string temp=PathName+".tmp";File.WriteAllText(temp,Storage.Json.Serialize(profiles));if(File.Exists(PathName))File.Replace(temp,PathName,PathName+".bak");else File.Move(temp,PathName);}
  public static double Number(string text,string key,double fallback){var m=Regex.Match(text,@"(?m)^"+Regex.Escape(key)+@"\s*=\s*([-+0-9.eE]+)");double value;return m.Success&&double.TryParse(m.Groups[1].Value,NumberStyles.Float,C,out value)&&!double.IsNaN(value)&&!double.IsInfinity(value)?value:fallback;}
  public static string SetNumber(string text,string key,double value){string pattern=@"(?m)^"+Regex.Escape(key)+@"[ \t]*=.*$";if(!Regex.IsMatch(text,pattern))throw new InvalidDataException("Missing stereo setting: "+key);return Regex.Replace(text,pattern,key+" = "+value.ToString("R",C));}
+ public static string PrepareAzaharLaunch(string text){
+  // Qt ignores a saved value when its default flag remains true.
+  foreach(string key in new[]{"fullscreen","confirmClose"}){
+   string value=key=="fullscreen"?"true":"false";
+   foreach(string suffix in new[]{"\\default",""}){
+    string name=key+suffix,line=name+"="+(suffix==""?value:"false");
+    string pattern=@"(?m)^"+Regex.Escape(name)+@"=[^\r\n]*";
+    if(Regex.IsMatch(text,pattern))text=Regex.Replace(text,pattern,line);
+    else text=Regex.Replace(text,@"(?m)^\[UI\]\r?$",m=>m.Value+"\n"+line);
+   }
+  }
+  return text;
+ }
  public static double AzaharStep(double value,int direction){return direction>0?Math.Min(255,(Math.Floor(value/5)+1)*5):Math.Max(0,(Math.Ceiling(value/5)-1)*5);}
 }
 public partial class DepthWindow {

@@ -8,7 +8,7 @@ using Microsoft.Win32.SafeHandles;
 // output reports, or disables the emulator's IMU on close.
 public sealed class PassiveExitInput : IDisposable {
  public const int Message=0x8064;
- static int sequence;
+ static int sequence; int pendingStereo; public int TakeStereoMove(){return Interlocked.Exchange(ref pendingStereo,0);}
  public readonly int Token=Interlocked.Increment(ref sequence);
  readonly IntPtr window;readonly Thread worker;readonly object gate=new object();
  volatile bool running=true;SafeFileHandle current;
@@ -33,6 +33,12 @@ public sealed class PassiveExitInput : IDisposable {
  }
  public PassiveExitInput(IntPtr target){window=target;worker=new Thread(Listen){IsBackground=true,Name="dEPTH passive exit reports"};worker.Start();}
  public static bool Chord(byte[] report){return report.Length>=6&&(report[0]==0x30||report[0]==0x31)?(report[4]&12)==12:report.Length>=3&&report[0]==0x3f&&(report[2]&12)==12;}
+ public static int StereoChord(byte[] report,int length){
+  if(length<6||(report[0]!=0x30&&report[0]!=0x31))return 0;
+  if((report[3]&0x80)==0||(report[5]&0x80)==0)return 0;
+  if((report[4]&0x30)==0x30)return 3;
+  int d=report[5]&15;return d==2?2:d==1?-2:d==8?-1:d==4?1:0;
+ }
  void Listen(){
   while(running){try{
    string path=FindController();if(path==null){Status="controller unavailable";Thread.Sleep(500);continue;}
@@ -41,9 +47,10 @@ public sealed class PassiveExitInput : IDisposable {
     var attributes=new Attributes{size=Marshal.SizeOf(typeof(Attributes))};if(!HidD_GetAttributes(handle,ref attributes)||attributes.vendor!=0x057e||attributes.product!=0x2009){Status="controller identity mismatch";Thread.Sleep(500);continue;}
     lock(gate){if(!running)return;current=handle;}
     try{using(var stream=new FileStream(handle,FileAccess.Read,512,true)){
-     byte[] report=new byte[512];bool armed=false;Status="listening";
+     byte[] report=new byte[512];bool armed=false;int lastStereo=99;long nextStereo=0;var stereoClock=System.Diagnostics.Stopwatch.StartNew();Status="listening";
      while(running){int length=stream.Read(report,0,report.Length);if(length<3)break;Reports++;if(report[0]==0x30||report[0]==0x31)FullReports++;LastReport=BitConverter.ToString(report,0,Math.Min(12,length));
       if(report[0]!=0x30&&report[0]!=0x31&&report[0]!=0x3f)continue;
+      int move=StereoChord(report,length);long now=stereoClock.ElapsedMilliseconds;if(move==0){lastStereo=0;}else if(lastStereo!=99&&(move!=lastStereo||(move!=3&&now>=nextStereo))){Interlocked.Exchange(ref pendingStereo,move);nextStereo=now+(move!=lastStereo?400:150);lastStereo=move;}
       if(!Chord(report))armed=true;else if(armed){armed=false;PostMessage(window,Message,new IntPtr(Token),IntPtr.Zero);}
      }
     }}finally{lock(gate)current=null;}

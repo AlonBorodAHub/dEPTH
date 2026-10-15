@@ -22,8 +22,8 @@ public partial class DepthWindow {
   bool ready=activeGame!=null&&playing&&closingSince<0&&IsWindow(gameWindow)&&BelongsToGame(gameWindow);
   if(stereoHeldKey!=0&&(!ready||frameClock.ElapsedMilliseconds>=stereoReleaseAt))ReleaseStereoKey();
   if(!ready||!StereoForeground())return;
-  if(controllerInput.StereoMove==3){BeginStereoReset();return;}
-  int move=controllerInput.StereoMove;
+  int passiveMove=passiveExit==null?0:passiveExit.TakeStereoMove();int requestedMove=passiveMove!=0?passiveMove:controllerInput.StereoMove;if(requestedMove==3){BeginStereoReset();return;}
+  int move=requestedMove;
   if(resettingStereo){
    if(stereoProfile==null||stereoProfile.Depth==stereoProfile.OriginalDepth){resettingStereo=false;return;}
    if(stereoHeldKey!=0||frameClock.ElapsedMilliseconds<nextStereoReset)return;

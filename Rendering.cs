@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -111,7 +111,7 @@ public partial class DepthWindow {
   float blend=(float)(1-Math.Exp(-dt*32));AnimateTabs(blend);
   for(int i=page*10;i<Math.Min(shown.Count,page*10+10);i++){Game game=shown[i];float value=Hover(game),target=!platformFocused&&game==FocusedCover?1:0;if(Math.Abs(value-target)<.002f){if(value!=target){hover[game]=target;InvalidateCard(game);}continue;}hover[game]=value+(target-value)*blend;InvalidateCard(game);InvalidatePointer();}
  }
- string SceneKey(){return ClientSize+"|"+lib.Stereo+"|"+lib.Depth+"|"+lib.SwapEyes+"|"+lib.HeadTracking+"|"+page+"|"+filter+"|"+query+"|"+shown.Count+"|"+(selected==null?"":selected.Title+selected.Note)+"|"+(FocusedCover==null?"":FocusedCover.Title)+"|"+status+"|"+panel+"|"+menuIndex+"|"+keyIndex+"|"+editText+"|"+upper+"|"+panelMessage+"|"+platformFocused;}
+ string SceneKey(){return ClientSize+"|"+lib.Stereo+"|"+lib.Depth+"|"+lib.SwapEyes+"|"+lib.HeadTracking+"|"+page+"|"+filter+"|"+query+"|"+shown.Count+"|"+(selected==null?"":selected.Title+selected.Note)+"|"+(FocusedCover==null?"":FocusedCover.Title)+"|"+status+"|"+panel+"|"+menuIndex+"|"+keyIndex+"|"+editText+"|"+upper+"|"+panelMessage+"|"+platformFocused+"|"+(panel!=""&&panel!="keyboard"?string.Join("|",MenuItems()):"");}
  void ClearRenderCache(){chromeKey="";coverPaths.Clear();DisposeArrival();ClearScrollPreviews();foreach(Bitmap b in sprites.Values){if(gpu!=null)gpu.Forget(b);b.Dispose();}sprites.Clear();foreach(Image i in images.Values)if(i!=null)i.Dispose();images.Clear();Invalidate();}
  Bitmap Sprite(Game game){Bitmap b;if(sprites.TryGetValue(game,out b))return b;SizeF size=CoverSize(game);b=new Bitmap(Math.Max(1,(int)Math.Ceiling(size.Width*2)),Math.Max(1,(int)Math.Ceiling(size.Height*2)),PixelFormat.Format32bppPArgb);using(var g=Graphics.FromImage(b)){g.ScaleTransform(b.Width/size.Width,b.Height/size.Height);g.SmoothingMode=SmoothingMode.AntiAlias;g.InterpolationMode=InterpolationMode.HighQualityBicubic;g.TextRenderingHint=System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;using(var clip=Rounded(new RectangleF(PointF.Empty,size),8)){g.SetClip(clip);DrawCardArtwork(g,game);}}sprites.Add(game,b);return b;}
  void RenderFast(Graphics g){

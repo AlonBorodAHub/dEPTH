@@ -182,6 +182,10 @@ public partial class DepthWindow {
   lastTabletCheck=-1000;tabletWindow=IntPtr.Zero;tabletPhase=0;activeGame=game;if(menuAudio!=null){menuAudio.StopIntro();menuAudio.SetMenu(false);}steamDirectory=game.SteamId==""?"":SteamDirectory(game.SteamId);
   ResetHubEvidence();CoverScreen();libraryMasked=true;Invalidate();Update();WatchGameVisibility(); // Keep the underlying library black for the entire game.
   try{
+   if(string.Equals(Path.GetFileNameWithoutExtension(game.Executable),"azahar",StringComparison.OrdinalIgnoreCase)){
+    if(Process.GetProcessesByName("azahar").Length!=0)throw new InvalidOperationException("Close the existing Azahar session before launching a game from dEPTH.");
+    if(File.Exists(AzaharConfig)){string config=File.ReadAllText(AzaharConfig);File.WriteAllText(AzaharConfig,StereoProfiles.PrepareAzaharLaunch(config));}
+   }
    if(!RawSbsRecording)PrepareNativeStereo(game);PrepareStereoProfile(game);launchedProcess=Process.Start(info);gameWindow=IntPtr.Zero;readySince=-1;returnSince=-1;revealing=false;playing=false;controllerInput.Reset();
    escapeRegistered=RegisterHotKey(Handle,Hotkey,0x4000,(uint)Keys.Escape);
    handoffClock.Restart();lastHubRead=-1000;hubTail="";handoffTimer.Start();
@@ -201,11 +205,20 @@ public partial class DepthWindow {
    // Keep a neutral frame while the Hub switches back to Depth's window.
    double elapsed=handoffClock.ElapsedMilliseconds-returnSince;
    if(elapsed>=250&&LibraryConversionReady()){libraryMasked=false;if(startupOpening){if(menuAudio!=null)menuAudio.StartIntro();introSince=frameClock.ElapsedMilliseconds+IntroSettle;}Invalidate();RemoveCurtain();handoffTimer.Stop();returnSince=-1;return;}
+   // The previous game's conversion can still be shutting down when the
+   // replacement library first appears. Retry detection once, only after no
+   // fullscreen converter remains; never interrupt an activating converter.
+   if(elapsed>=6000&&!returnRefreshRetried&&!ConversionWindowVisible()){
+    returnRefreshRetried=true;ResetHubEvidence();RefreshFullscreenDetection();
+    try{File.WriteAllText(Path.Combine(Storage.Folder,"return-retry.txt"),DateTime.Now.ToString("s")+" Refreshed fullscreen after previous converter disappeared.");}catch{}
+    return;
+   }
    // Do not resize the capture target during activation: the Hub can take
    // several seconds to enable its lenses and resizing cancels that work.
-   if(elapsed>=30000){handoffTimer.Stop();RemoveCurtain();var choice=MessageBox.Show(this,"Odyssey 3D Hub has not activated 3D for Depth. Retry? Cancel closes Depth.","3D connection",MessageBoxButtons.RetryCancel);if(choice==DialogResult.Retry){ResetHubEvidence();handoffClock.Restart();RefreshFullscreenDetection();handoffTimer.Start();}else{Close();}}return;
+   if(elapsed>=15000){handoffTimer.Stop();RemoveCurtain();RemoveSecondaryCurtain();Hide();Close();MessageBox.Show("Odyssey did not activate 3D. dEPTH has closed and returned control to the desktop. No game was stopped. Restart Odyssey 3D Hub before trying again.","dEPTH: 3D unavailable",MessageBoxButtons.OK,MessageBoxIcon.Information);}return;
   }
   if(activeGame==null)return;
+  if(launchedProcess!=null&&activeGame.SteamId==""&&launchedProcess.HasExited){ReturnFromGame();return;}
   PlaceTabletScreen();
   if(playing){
    if(!IsWindow(gameWindow)||!IsWindowVisible(gameWindow)){

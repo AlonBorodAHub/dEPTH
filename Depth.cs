@@ -17,6 +17,7 @@ public class Game {
 }
 public class Library {
  public List<EmulatorSource> Sources=new List<EmulatorSource>();
+ public List<string> RomFolders=new List<string>();
  public bool ScanSteam=true;
  public bool EnableStereoProfiles=true;
  public string Root=@"C:\Games\Emulators";
@@ -107,7 +108,7 @@ public static class Storage {
 }
 
 public partial class DepthWindow:Form {
- public const string AppVersion="1.2";
+ public const string AppVersion="1.4";
  Library lib; List<Game> shown=new List<Game>();
  IEnumerable<Game> VisibleGames {get{return lib.Games.Where(g=>lib.IsGameVisible(g));}}
  readonly Dictionary<Game,string> coverPaths=new Dictionary<Game,string>();
@@ -123,7 +124,21 @@ public partial class DepthWindow:Form {
  [DllImport("user32.dll")] static extern bool UnregisterHotKey(IntPtr h,int id);
  [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
  [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
+ [DllImport("user32.dll",EntryPoint="SystemParametersInfoW")] static extern bool RestoreCursorScheme(uint action,uint parameter,IntPtr value,uint flags);
+ static int fatalErrorReported;
+ static void RecoverFromManagedError(Exception error){
+  if(System.Threading.Interlocked.Exchange(ref fatalErrorReported,1)!=0){Environment.Exit(1);return;}
+  try{File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"managed-error.log"),DateTime.Now.ToString("o")+Environment.NewLine+error+Environment.NewLine);}catch{}
+  // Do not invoke normal renderer/audio disposal after an unhandled error:
+  // it may be the failing component. Process exit releases our windows only.
+  try{RestoreCursorScheme(0x0057,0,IntPtr.Zero,0);}catch{}
+  Environment.Exit(1);
+ }
  [STAThread] public static void Main(string[] args) {
+  Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+  Application.ThreadException+=(sender,eventArgs)=>RecoverFromManagedError(eventArgs.Exception);
+  AppDomain.CurrentDomain.UnhandledException+=(sender,eventArgs)=>RecoverFromManagedError(eventArgs.ExceptionObject as Exception??new Exception("Unhandled non-Exception error"));
+  if(args.Contains("--recovery-self-test")){RecoverFromManagedError(new InvalidOperationException("RECOVERY_SELF_TEST"));return;}
   SetProcessDPIAware();
   DepthWindow.RawSbsRecording=args.Contains("--raw-sbs-recording");
   if(args.Length==2&&args[0]=="--cursor-guard"){SystemCursorGuard.Run(args[1]);return;}
@@ -131,8 +146,8 @@ public partial class DepthWindow:Form {
   try {
    if(args.Contains("--self-test")){SelfTest.Run();return;}
    if(args.Contains("--scan")){var library=Storage.Load();Storage.Scan(library);Storage.Save(library);return;}
-   if(args.Contains("--setup")||(!File.Exists(Storage.FileName)&&!args.Any(a=>a.StartsWith("--render")))){if(!PublicSetup.Show())return;if(args.Contains("--setup"))return;}
-   if(!args.Any(a=>a.StartsWith("--render")))SystemCursorGuard.Start();
+   bool setupRequested=args.Contains("--setup")||!File.Exists(Storage.FileName);
+   // Keep the Windows cursor available outside our own rendering surface.
    LibraryResumeState resume=null;TransitionCurtain resumeCover=null,resumeSecondaryCover=null;int resumeArg=Array.IndexOf(args,"--resume-library");
    if(resumeArg>=0&&resumeArg+1<args.Length){
     resume=Storage.Json.Deserialize<LibraryResumeState>(System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(args[resumeArg+1])));
@@ -146,10 +161,10 @@ public partial class DepthWindow:Form {
    // native-game cleanup may hold automatic conversion off beyond the parent's
    // cover timeout. Only the real library window needs automatic SBS ready.
    if(!args.Any(a=>a.StartsWith("--render"))&&!DepthWindow.RawSbsRecording)WaitForAutomaticHub();
-   var win=new DepthWindow();if(resume!=null){win.secondaryReturnCurtain=resumeSecondaryCover;win.RestoreLibrary(resume);win.Shown+=(s,e)=>{win.Update();resumeCover.Close();resumeCover.Dispose();win.BringToFront();win.Activate();SetForegroundWindow(win.Handle);};}
+   var win=new DepthWindow();if(setupRequested)win.OpenScan();if(resume!=null){win.secondaryReturnCurtain=resumeSecondaryCover;win.RestoreLibrary(resume);win.Shown+=(s,e)=>{win.Update();resumeCover.Close();resumeCover.Dispose();win.BringToFront();win.Activate();SetForegroundWindow(win.Handle);};}
    if(args.Contains("--render")||args.Contains("--render-sbs")) {win.ClientSize=new Size(1600,1000);win.CreateControl();if(args.Contains("--menu"))win.panel="menu";if(args.Contains("--keyboard"))win.OpenSearch();bool stereo=win.lib.Stereo;win.lib.Stereo=args.Contains("--render-sbs");if(args.Contains("--hover")){win.over=win.shown.FirstOrDefault();if(win.over!=null)win.hover[win.over]=1;}using(var b=new Bitmap(1600,1000))using(var g=Graphics.FromImage(b)){win.OnPaint(new PaintEventArgs(g,new Rectangle(0,0,1600,1000)));b.Save(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,win.lib.Stereo?"preview-sbs.png":"preview.png"));}win.lib.Stereo=stereo;win.Dispose();return;}
    win.PrepareStartup();Application.Run(win);
-  }catch(Exception e){File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"error.log"),e.ToString());if(!args.Contains("--self-test"))MessageBox.Show(e.Message,"Depth");Environment.ExitCode=1;}
+  }catch(Exception e){RecoverFromManagedError(e);}
  }
  static void WaitForAutomaticHub(){
   // Do not expose a fullscreen window until the elevated guard has applied
@@ -172,7 +187,7 @@ public partial class DepthWindow:Form {
   using(var icon=new Icon(stream)) Icon=(Icon)icon.Clone();
   Text="dEPTH "+AppVersion+" | Spatial game library";ClientSize=new Size(1440,940);MinimumSize=new Size(1000,740);StartPosition=FormStartPosition.CenterScreen;
   DoubleBuffered=true;KeyPreview=true;BackColor=Color.FromArgb(9,14,25);
-  lib=Storage.Load();if(lib.Games.Count==0){Storage.Scan(lib);Storage.Save(lib);}if(!lib.Games.Any(g=>g.Favorite))filter="Library";RefreshGames();
+  lib=Storage.Load();if(!lib.Games.Any(g=>g.Favorite))filter="Library";RefreshGames();
   lib.Stereo=true;lib.Fullscreen=true;
   Shown+=(s,e)=>{if(!full)Fullscreen();};
   InitializeRendering();InitializeTransitions();InitializeNavigation();InitializeCompanion();
@@ -241,16 +256,22 @@ public partial class DepthWindow:Form {
  void ClickScene(object sender,MouseEventArgs e){if(activeGame!=null||returnSince>=0||introSince>=0||revealSince>=0||ScrollAnimating)return;if(panel!=""){ClickPanel(Logical(e.Location));return;}platformFocused=false;Invalidate();PointF p=Logical(e.Location);RebuildHits();Game target=GameAt(p);if(target!=null){selected=target;if(e.Button==MouseButtons.Right)Edit(target);else Launch(target);return;}string id=buttons.Where(x=>x.Value.Contains(p)).Select(x=>x.Key).FirstOrDefault();if(id==null)return;UiSound(true);
   if(id.StartsWith("tab:")){filter=id.Substring(4);page=0;RefreshGames();}else if(id=="full")Fullscreen();else if(id=="scan")Scan();else if(id=="settings")Settings();else if(id=="edit"&&selected!=null)Edit(selected);else if(id=="play"&&selected!=null)Launch(selected);else if(id=="prev")ChangePage(-1);else if(id=="next")ChangePage(1);else if(id=="search")Search();
  }
- void Search(){string value=Prompt("Search library","Game title",query);if(value!=null){query=value;page=0;RefreshGames();}}
- void Scan(){try{Storage.Scan(lib);Storage.Save(lib);status="Scan complete. Existing launch profiles preserved.";RefreshGames();}catch(Exception e){MessageBox.Show(e.Message,"Scan failed");}}
- void Edit(Game g){using(var f=new Profile(g)){if(f.ShowDialog(this)==DialogResult.OK){if(!lib.Games.Contains(g))lib.Games.Add(g);Storage.Save(lib);ClearRenderCache();RefreshGames();}}Invalidate();}
- void Launch(Game game){UiSound(true);try{BeginGame(game);}catch(Exception ex){MessageBox.Show(this,ex.Message,"Could not launch "+game.Title);}}
+ protected override void OnKeyPress(KeyPressEventArgs e){base.OnKeyPress(e);if(panel=="keyboard"&&!char.IsControl(e.KeyChar)){editText+=e.KeyChar;e.Handled=true;Invalidate();}}
+ void Search(){OpenSearch();Invalidate();}
+ void Scan(){OpenScan();}
+ void Edit(Game g){editingOriginal=g;editingGame=Storage.Json.Deserialize<Game>(Storage.Json.Serialize(g));panel="edit";menuIndex=0;Invalidate();}
+ void Launch(Game game){UiSound(true);try{BeginGame(game);}catch(Exception ex){panel="menu";menuIndex=0;panelMessage="Could not launch "+game.Title+": "+ex.Message;Invalidate();}}
  void Return(){RequestExit();}
  protected override void WndProc(ref Message m){if(m.Msg==PassiveExitInput.Message&&passiveExit!=null&&m.WParam.ToInt32()==passiveExit.Token&&activeGame!=null)RequestExit();if(m.Msg==0x312&&m.WParam.ToInt32()==Hotkey){Return();return;}base.WndProc(ref m);}
  void Fullscreen(){if(!full){oldBounds=Bounds;FormBorderStyle=FormBorderStyle.None;WindowState=FormWindowState.Normal;Bounds=Screen.FromControl(this).Bounds;full=true;}else{FormBorderStyle=FormBorderStyle.Sizable;Bounds=oldBounds;full=false;}lib.Fullscreen=full;Storage.Save(lib);Invalidate();}
  void KeysDown(object sender,KeyEventArgs e){
+  if(e.KeyCode==Keys.Escape&&activeGame==null&&returnSince>=0){handoffTimer.Stop();RemoveCurtain();RemoveSecondaryCurtain();Close();e.Handled=true;e.SuppressKeyPress=true;return;}
   int move=e.KeyCode==Keys.Left?-1:e.KeyCode==Keys.Right?1:e.KeyCode==Keys.Up?-5:e.KeyCode==Keys.Down?5:0;
   if(activeGame!=null||returnSince>=0||libraryMasked||introSince>=0||revealSince>=0){if(e.KeyCode==Keys.Escape)Return();e.Handled=true;return;}
+  if(panel=="keyboard"){
+   if(e.KeyCode==Keys.Enter){FinishText();}else if(e.KeyCode==Keys.Escape){panel=keyboardReturnPanel;acceptText=null;}else if(e.KeyCode==Keys.Back){if(editText.Length>0)editText=editText.Substring(0,editText.Length-1);}else{e.Handled=false;e.SuppressKeyPress=false;return;}
+   Invalidate();e.Handled=true;e.SuppressKeyPress=true;return;
+  }
   if(panel!=""){uint pressed=e.KeyCode==Keys.Enter?1u:e.KeyCode==Keys.Escape?2u:0u;HandleNavigation(move,pressed);e.Handled=true;e.SuppressKeyPress=true;return;}
   if(move!=0){MoveLibraryFocus(move);UiSound(false);e.Handled=true;e.SuppressKeyPress=true;return;}
   if(platformFocused&&(e.KeyCode==Keys.Enter||e.KeyCode==Keys.Escape)){FocusGame();UiSound(e.KeyCode==Keys.Enter);e.Handled=true;e.SuppressKeyPress=true;return;}

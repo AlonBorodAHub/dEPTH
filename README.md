@@ -4,6 +4,12 @@ A Windows game-library frontend for Samsung Odyssey 3D monitors. Browse floating
 
 **v0.1.0-beta.3 — early public beta.** Developed and tested on one Odyssey 3D setup; broader hardware and emulator compatibility needs community testing. dEPTH renders side-by-side images. Samsung's Odyssey 3D Hub performs the display conversion. dEPTH does not turn arbitrary games into stereoscopic 3D.
 
+## Current source: dEPTH 1.4
+
+The source displays version 1.4 in the header, window title, and About screen. Existing beta 3 release downloads remain available below.
+
+Recent source updates improve library scanning and artwork import, Azahar fullscreen launch preparation, emulator exit recovery, controller handling, and display transitions. Azahar launches prepare fullscreen and disable close confirmation; an emulator that exits during startup returns control to the library. Firmware and keyboard applet files are not included.
+
 ## Download and start
 
 1. Download `dEPTH-v0.1.0-beta.3-win-x64.zip` from Releases and extract the entire archive into a writable folder, such as `C:\Games\dEPTH`. Do not run inside the ZIP or install into Program Files.

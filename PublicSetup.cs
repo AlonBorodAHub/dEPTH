@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -18,7 +18,7 @@ public static class PublicSetup {
    foreach(string d in dirs){bool link;try{link=(File.GetAttributes(d)&FileAttributes.ReparsePoint)!=0;}catch{continue;}if(!link)pending.Push(d);}
   }
  }
- public static string Arguments(string platform){return DiscSystems.IsDolphin(platform)?"-b --config Dolphin.Display.Fullscreen=True -e {rom}":platform=="Dreamcast"?"-config window:fullscreen=yes {rom}":platform=="PS2"?"-fullscreen {rom}":platform=="PS3"?"--no-gui --fullscreen {rom}":platform=="Switch"?"-f -g {rom}":"{rom}";}
+ public static string Arguments(string platform){return DiscSystems.IsDolphin(platform)?"-b --config Dolphin.Display.Fullscreen=True -e {rom}":platform=="Dreamcast"?"-config window:fullscreen=yes {rom}":platform=="PS2"?"-fullscreen {rom}":platform=="PS3"?"--no-gui --fullscreen {rom}":platform=="Switch"||platform=="Wii U"?"-f -g {rom}":"{rom}";}
  public static List<Game> ScanSource(EmulatorSource source){
   var games=new List<Game>();
   string extensions=source.Platform=="3DS"?".3ds .cci .cxi .app":DiscSystems.IsDolphin(source.Platform)?".iso .gcm .rvz .wia .wbfs":source.Platform=="Dreamcast"?".chd .gdi .cdi":source.Platform=="PS2"?".iso .chd .cso .bin":source.Platform=="Switch"?".xci .nsp":"";

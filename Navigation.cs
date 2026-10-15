@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -59,7 +59,7 @@ public partial class DepthWindow {
   }
   if(panel!=""){
    var items=MenuItems();if(move!=0){int delta=move<0?-1:1;menuIndex=(menuIndex+delta+items.Length)%items.Length;}
-   if(back){if(panel=="about")CloseAbout();else panel="";panelMessage="";}
+   if(back){if(scanBusy){scanCancel.Cancel();panelMessage="Stopping… imported games are saved.";Invalidate();return;}if(panel=="about")CloseAbout();else if(panel=="browse")panel=browseReturn;else panel="";menuIndex=0;panelMessage="";}
    else if(confirm)ActivateMenu();Invalidate();return;
   }
   if((pressed&(1u<<9))!=0)SelectTab(-1);else if((pressed&(1u<<10))!=0)SelectTab(1);
@@ -83,29 +83,36 @@ public partial class DepthWindow {
  void OpenKeyboard(string label,string value,Action<string> apply){keyboardReturnPanel=panel;editLabel=label;editText=value??"";acceptText=apply;keyIndex=0;panel="keyboard";panelMessage="";}
  string[] KeyboardKeys(){string chars=upper?"ABCDEFGHIJKLMNOPQRSTUVWXYZ":"abcdefghijklmnopqrstuvwxyz";return (chars+"0123456789 ._-:/\\{}\"()").Select(c=>c.ToString()).Concat(new[]{"Space","Delete","Case","Done"}).ToArray();}
  void KeyboardSelect(){var keys=KeyboardKeys();string key=keys[keyIndex];if(key=="Done"){FinishText();return;}if(key=="Case")upper=!upper;else if(key=="Delete"){if(editText.Length>0)editText=editText.Substring(0,editText.Length-1);}else editText+=key=="Space"?" ":key;}
- void FinishText(){var apply=acceptText;panel="";acceptText=null;if(apply!=null)apply(editText);}
+ void FinishText(){var apply=acceptText;panel=keyboardReturnPanel;acceptText=null;if(apply!=null)apply(editText);}
  string[] MenuItems(){
+  if(panel=="browse")return BrowserItems();
+  if(panel=="scan")return ScanItems();
+  if(panel=="import-review")return SetupItems();
   if(panel=="about")return new[]{"Back"};
-  if(panel=="settings")return new[]{"Depth  −","Depth  +","Swap eyes: "+(lib.SwapEyes?"On":"Off"),"Library folder","Add game","Fullscreen","Head tracking: "+(lib.HeadTracking?"On":"Off"),"About","Back"};
-  if(panel=="edit")return new[]{"Title","Platform","Executable","Arguments","ROM","Steam ID","Cover","Notes","Save","Cancel"};
+  if(panel=="settings")return new[]{"Depth  −","Depth  +","Swap eyes: "+(lib.SwapEyes?"On":"Off"),"Library folder","Add games from folder","Fullscreen","Head tracking: "+(lib.HeadTracking?"On":"Off"),"About","Back"};
+  if(panel=="edit")return new[]{"Title: "+editingGame.Title,"Platform: "+editingGame.Platform,"Executable: "+editingGame.Executable,"Arguments: "+editingGame.Arguments,"ROM: "+editingGame.Rom,"Steam ID: "+editingGame.SteamId,"Cover: "+editingGame.Cover,"Notes: "+editingGame.Note,"Save","Cancel"};
   if(panel=="quit")return new[]{"Cancel","Quit dEPTH"};
   return new[]{"Play","Favorite","Search","Scan","Settings","Edit","Quit","About","Back"};
  }
  void OpenAbout(){aboutReturnPanel=panel;aboutReturnIndex=menuIndex;panel="about";menuIndex=0;}
  void CloseAbout(){panel=aboutReturnPanel;menuIndex=aboutReturnIndex;}
  void ActivateMenu(){
+  if(scanBusy&&panel!="scan")return;
   panelMessage="";
+  if(panel=="browse"){ActivateBrowser();return;}
+  if(panel=="scan"){ActivateScan();return;}
+  if(panel=="import-review"){ActivateSetup();return;}
   if(panel=="about"){CloseAbout();return;}
   if(panel=="quit"){if(menuIndex==1)Close();else panel="";return;}
   if(panel=="settings"){
    if(menuIndex==7){OpenAbout();return;}
-   switch(menuIndex){case 0:lib.Depth=Math.Max(0,lib.Depth-.1f);break;case 1:lib.Depth=Math.Min(2,lib.Depth+.1f);break;case 2:lib.SwapEyes=!lib.SwapEyes;break;case 3:OpenKeyboard("Library folder",lib.Root,value=>{lib.Root=value;Storage.Save(lib);panel="settings";});return;case 4:editingOriginal=null;editingGame=new Game{Platform="Custom",Arguments="{rom}"};panel="edit";menuIndex=0;return;case 5:Fullscreen();return;case 6:lib.HeadTracking=!lib.HeadTracking;headCentered=false;break;default:panel="";return;}Storage.Save(lib);return;
+   switch(menuIndex){case 0:lib.Depth=Math.Max(0,lib.Depth-.1f);break;case 1:lib.Depth=Math.Min(2,lib.Depth+.1f);break;case 2:lib.SwapEyes=!lib.SwapEyes;break;case 3:OpenBrowser(lib.Root,true,value=>{lib.Root=value;Storage.Save(lib);});return;case 4:AddRoms();return;case 5:Fullscreen();return;case 6:lib.HeadTracking=!lib.HeadTracking;headCentered=false;break;default:panel="";return;}Storage.Save(lib);return;
   }
   if(panel=="edit"){
    string[] fields={"Title","Platform","Executable","Arguments","Rom","SteamId","Cover","Note"};
-   if(menuIndex<8){string field=fields[menuIndex];OpenKeyboard(MenuItems()[menuIndex],(string)typeof(Game).GetField(field).GetValue(editingGame),value=>{typeof(Game).GetField(field).SetValue(editingGame,value);panel="edit";});return;}
+   if(menuIndex<8){string field=fields[menuIndex];if(field=="Executable"||field=="Rom"||field=="Cover"){OpenBrowser((string)typeof(Game).GetField(field).GetValue(editingGame),false,value=>{typeof(Game).GetField(field).SetValue(editingGame,value);if(field=="Executable"&&editingGame.Title=="")editingGame.Title=System.IO.Path.GetFileNameWithoutExtension(value);});return;}OpenKeyboard(MenuItems()[menuIndex],(string)typeof(Game).GetField(field).GetValue(editingGame),value=>{typeof(Game).GetField(field).SetValue(editingGame,value);panel="edit";});return;}
    if(menuIndex==8){if(string.IsNullOrWhiteSpace(editingGame.Title)){panelMessage="Title required";return;}try{Storage.StartInfo(editingGame);}catch(Exception ex){panelMessage=ex.Message;return;}
-    if(editingOriginal!=null){int i=lib.Games.IndexOf(editingOriginal);if(i>=0)lib.Games[i]=editingGame;}else lib.Games.Add(editingGame);Storage.Save(lib);selected=editingGame;ClearRenderCache();RefreshGames();FocusGame();}
+    if(editingOriginal!=null){int i=lib.Games.IndexOf(editingOriginal);if(i>=0)lib.Games[i]=editingGame;}else lib.Games.Add(editingGame);Storage.Save(lib);selected=editingGame;filter="Library";query="";if(lib.HiddenPlatforms!=null)lib.HiddenPlatforms.Remove(editingGame.Platform);if(lib.HiddenGameKeys!=null)lib.HiddenGameKeys.Remove(editingGame.Key);Storage.Save(lib);ClearRenderCache();RefreshGames();page=Math.Max(0,shown.IndexOf(selected)/10);FocusGame();}
    panel="";editingOriginal=null;return;
   }
   switch(menuIndex){case 0:panel="";if(selected!=null)Launch(selected);break;case 1:ToggleFavorite();break;case 2:OpenSearch();break;case 3:Scan();break;case 4:panel="settings";menuIndex=0;break;case 5:if(selected!=null){editingOriginal=selected;editingGame=Storage.Json.Deserialize<Game>(Storage.Json.Serialize(selected));panel="edit";menuIndex=0;}break;case 6:panel="quit";menuIndex=0;break;case 7:OpenAbout();break;default:panel="";break;}
@@ -113,7 +120,7 @@ public partial class DepthWindow {
  Game editingOriginal;
  void DrawControllerPanel(Graphics g){
   Fill(g,Color.FromArgb(250,12,25,40),new RectangleF(240,125,960,690));
-  TextAt(g,panel=="keyboard"?editLabel:panel=="settings"?"Settings":panel=="edit"?"Edit":panel=="quit"?"Quit":panel=="about"?"About":"Menu",28,Color.White,280,153,880,FontStyle.Bold);
+  TextAt(g,panel=="keyboard"?editLabel:panel=="settings"?"Settings":panel=="edit"?(editingOriginal==null?"Add game":"Edit game"):panel=="browse"?"Choose "+(browseFolders?"folder":"file"):panel=="scan"?"Scan library":panel=="import-review"?"Games needing setup":panel=="quit"?"Quit":panel=="about"?"About":"Menu",28,Color.White,280,153,880,FontStyle.Bold);
   if(panel=="about"){
    TextAt(g,"dEPTH  "+AppVersion,32,Color.FromArgb(150,245,225),280,237,880,FontStyle.Bold);
    TextAt(g,"Depth 3D front end for 3D games",25,Color.White,280,317,880);

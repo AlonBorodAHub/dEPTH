@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
-public class CompanionMedia {public string Image="",Summary="",Details="",ImageSource="",InfoSource="",Credit="";}
+public class CompanionMedia {public string CoverSource="",Image="",Summary="",Details="",ImageSource="",InfoSource="",Credit="";}
 sealed class CompanionWindow:Form {
  public Action<Graphics,Size> Draw;
  public Action<GpuRenderer,Size> DrawGpu;GpuRenderer renderer;bool rendererAttempted;

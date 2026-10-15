@@ -1,7 +1,7 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 New-Item -ItemType Directory -Force -Path (Join-Path $root 'bin') | Out-Null
-& 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe' /nologo /target:winexe /optimize+ /win32icon:"$root\assets\depth.ico" "/resource:$root\assets\depth.ico,Depth.AppIcon" /out:"$root\bin\Depth.exe" /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll "$root\Depth.cs" "$root\PublicSetup.cs" "$root\Rendering.cs" "$root\FrameTiming.cs" "$root\HeadTracking.cs" "$root\GpuRenderer.cs" "$root\Transitions.cs" "$root\ControllerInput.cs" "$root\GyroPointer.cs" "$root\SystemCursorGuard.cs" "$root\PointerPresentation.cs" "$root\PointerTrail.cs" "$root\PassiveExitInput.cs" "$root\HoverScroll.cs" "$root\PanelPointer.cs" "$root\SaveStateControls.cs" "$root\StereoControls.cs" "$root\StereoPersistence.cs" "$root\Navigation.cs" "$root\Polish.cs" "$root\MenuAudio.cs" "$root\Arrival.cs" "$root\TabletDisplay.cs" "$root\VectorTitle.cs" "$root\Companion.cs" "$root\ConsoleModels.cs" "$root\DiscSystems.cs" "$root\ImportedModels.cs"
+& 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe' /nologo /target:winexe /optimize+ /win32icon:"$root\assets\depth.ico" "/resource:$root\assets\depth.ico,Depth.AppIcon" /out:"$root\bin\Depth.exe" /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll "$root\Depth.cs" "$root\PublicSetup.cs" "$root\Rendering.cs" "$root\FrameTiming.cs" "$root\HeadTracking.cs" "$root\GpuRenderer.cs" "$root\Transitions.cs" "$root\ControllerInput.cs" "$root\GyroPointer.cs" "$root\SystemCursorGuard.cs" "$root\PointerPresentation.cs" "$root\PointerTrail.cs" "$root\PassiveExitInput.cs" "$root\HoverScroll.cs" "$root\PanelPointer.cs" "$root\SaveStateControls.cs" "$root\StereoControls.cs" "$root\StereoPersistence.cs" "$root\Navigation.cs" "$root\LibraryUi.cs" "$root\AutoImport.cs" "$root\ImportMedia.cs" "$root\Polish.cs" "$root\MenuAudio.cs" "$root\Arrival.cs" "$root\TabletDisplay.cs" "$root\VectorTitle.cs" "$root\Companion.cs" "$root\ConsoleModels.cs" "$root\DiscSystems.cs" "$root\ImportedModels.cs"
 if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
 & 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe' /nologo /target:winexe /optimize+ /main:DepthRecorder /win32icon:"$root\assets\depth.ico" /out:"$root\bin\Depth Record.exe" /reference:System.Drawing.dll /reference:System.Windows.Forms.dll "$root\DepthRecord.cs"
 if ($LASTEXITCODE -ne 0) { throw 'Depth Record build failed' }
@@ -22,6 +22,7 @@ foreach($property in $selection.PSObject.Properties){
  Get-ChildItem -LiteralPath $source -File | Where-Object { $_.Extension -in '.mesh','.png' -or $_.Name -in 'materials.json','source.json','LICENSE.txt' } | Copy-Item -Destination $destination -Force
 }
 Write-Output "Built $root\bin\Depth.exe with imported models and credits"
+
 
 
 
