@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -28,7 +28,8 @@ public partial class DepthWindow {
   if(exit){Close();return;}UpdateGyroPointer();if(ActivateGyroPointer(controllerInput.Pressed))return;
   uint navigationButtons=controllerInput.Pressed;if(controllerInput.MotionReady)navigationButtons&=~(1u<<10);HandleNavigation(controllerInput.Move,navigationButtons);
  }
- string[] Tabs(){return new[]{"Library","Favorites"}.Concat(VisibleGames.Select(g=>g.Platform).Distinct()).ToArray();}
+ string[] cachedTabs;
+ string[] Tabs(){if(cachedTabs==null)cachedTabs=new[]{"Library","Favorites"}.Concat(VisibleGames.Select(g=>g.Platform).Distinct()).ToArray();return cachedTabs;}
  void SelectTab(int delta){var tabs=Tabs();int i=Array.IndexOf(tabs,filter);filter=tabs[(Math.Max(0,i)+delta+tabs.Length)%tabs.Length];page=0;selected=null;RefreshGames();FocusGame();}
  void FocusGame(){CancelScrollAnimation();keyboardTileFocus=true;ResetPreviewDwell();gyroPointerActive=false;platformFocused=false;over=selected;pointerInside=false;Invalidate();}
  void MoveLibraryFocus(int move){CancelScrollAnimation();
@@ -38,12 +39,12 @@ public partial class DepthWindow {
    Invalidate();return;
   }
   int current=shown.IndexOf(selected);
-  if(move<-1&&(shown.Count==0||current<5)){
+  if(move<-1&&(shown.Count==0||current<GridColumns)){
    platformFocused=true;over=null;pointerInside=false;Invalidate();return;
   }
   if(shown.Count==0)return;
-  int next=NavigationIndex(Math.Max(0,current),move,shown.Count,5);
-  selected=shown[next];page=next/10;FocusGame();
+  int next=NavigationIndex(Math.Max(0,current),move,shown.Count,GridColumns);
+  selected=shown[next];page=next/PageSize;FocusGame();
  }
  void HandleNavigation(int move,uint pressed){
   if(move==0&&pressed==0)return;CancelScrollAnimation();UiSound((pressed&1)!=0);
@@ -78,7 +79,7 @@ public partial class DepthWindow {
   if(direction==1)return index%columns==columns-1?index:Math.Min(count-1,index+1);
   return Math.Max(0,Math.Min(count-1,index+(direction<0?-columns:columns)));
  }
- void ToggleFavorite(){if(selected==null)return;var game=selected;game.Favorite=!game.Favorite;Storage.Save(lib);ClearRenderCache();RefreshGames();FocusGame();}
+ void ToggleFavorite(){var game=FocusedCover??selected;if(game==null)return;selected=game;game.Favorite=!game.Favorite;Storage.Save(lib);ClearRenderCache();RefreshGames();FocusGame();}
  void OpenSearch(){OpenKeyboard("Search",query,value=>{query=value;page=0;RefreshGames();FocusGame();});}
  void OpenKeyboard(string label,string value,Action<string> apply){keyboardReturnPanel=panel;editLabel=label;editText=value??"";acceptText=apply;keyIndex=0;panel="keyboard";panelMessage="";}
  string[] KeyboardKeys(){string chars=upper?"ABCDEFGHIJKLMNOPQRSTUVWXYZ":"abcdefghijklmnopqrstuvwxyz";return (chars+"0123456789 ._-:/\\{}\"()").Select(c=>c.ToString()).Concat(new[]{"Space","Delete","Case","Done"}).ToArray();}
@@ -112,7 +113,7 @@ public partial class DepthWindow {
    string[] fields={"Title","Platform","Executable","Arguments","Rom","SteamId","Cover","Note"};
    if(menuIndex<8){string field=fields[menuIndex];if(field=="Executable"||field=="Rom"||field=="Cover"){OpenBrowser((string)typeof(Game).GetField(field).GetValue(editingGame),false,value=>{typeof(Game).GetField(field).SetValue(editingGame,value);if(field=="Executable"&&editingGame.Title=="")editingGame.Title=System.IO.Path.GetFileNameWithoutExtension(value);});return;}OpenKeyboard(MenuItems()[menuIndex],(string)typeof(Game).GetField(field).GetValue(editingGame),value=>{typeof(Game).GetField(field).SetValue(editingGame,value);panel="edit";});return;}
    if(menuIndex==8){if(string.IsNullOrWhiteSpace(editingGame.Title)){panelMessage="Title required";return;}try{Storage.StartInfo(editingGame);}catch(Exception ex){panelMessage=ex.Message;return;}
-    if(editingOriginal!=null){int i=lib.Games.IndexOf(editingOriginal);if(i>=0)lib.Games[i]=editingGame;}else lib.Games.Add(editingGame);Storage.Save(lib);selected=editingGame;filter="Library";query="";if(lib.HiddenPlatforms!=null)lib.HiddenPlatforms.Remove(editingGame.Platform);if(lib.HiddenGameKeys!=null)lib.HiddenGameKeys.Remove(editingGame.Key);Storage.Save(lib);ClearRenderCache();RefreshGames();page=Math.Max(0,shown.IndexOf(selected)/10);FocusGame();}
+    if(editingOriginal!=null){int i=lib.Games.IndexOf(editingOriginal);if(i>=0)lib.Games[i]=editingGame;}else lib.Games.Add(editingGame);Storage.Save(lib);selected=editingGame;filter="Library";query="";if(lib.HiddenPlatforms!=null)lib.HiddenPlatforms.Remove(editingGame.Platform);if(lib.HiddenGameKeys!=null)lib.HiddenGameKeys.Remove(editingGame.Key);Storage.Save(lib);ClearRenderCache();RefreshGames();page=Math.Max(0,shown.IndexOf(selected)/PageSize);FocusGame();}
    panel="";editingOriginal=null;return;
   }
   switch(menuIndex){case 0:panel="";if(selected!=null)Launch(selected);break;case 1:ToggleFavorite();break;case 2:OpenSearch();break;case 3:Scan();break;case 4:panel="settings";menuIndex=0;break;case 5:if(selected!=null){editingOriginal=selected;editingGame=Storage.Json.Deserialize<Game>(Storage.Json.Serialize(selected));panel="edit";menuIndex=0;}break;case 6:panel="quit";menuIndex=0;break;case 7:OpenAbout();break;default:panel="";break;}
@@ -135,6 +136,9 @@ public partial class DepthWindow {
   }else{var items=MenuItems();for(int i=0;i<items.Length;i++){RectangleF r=new RectangleF(280,204+i*48,880,42);if(i==menuIndex)Fill(g,Color.FromArgb(46,102,119),r);TextAt(g,items[i],19,Color.White,r.X+14,r.Y+7,850);}TextAt(g,panelMessage!=""?panelMessage:panel=="settings"?"Depth: "+lib.Depth.ToString("0.0")+"     A  Select    B  Back":"A  Select    B  Back",14,Color.LightGray,280,752,880);}
  }
 }
+
+
+
 
 
 

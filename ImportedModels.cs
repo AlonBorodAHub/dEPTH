@@ -79,10 +79,13 @@ public sealed partial class GpuRenderer {
  void BindModelTexture(string name,string path,int slot){activeTexture(0x84C0u+(uint)slot);uniformI(U(name),slot);bool exists=!string.IsNullOrEmpty(path)&&(modelImages.ContainsKey(path)||File.Exists(path));F(name+"Present",exists?1:0);if(exists){Bitmap image;if(!modelImages.TryGetValue(path,out image)){using(var source=new Bitmap(path)){image=new Bitmap(source.Width,source.Height,System.Drawing.Imaging.PixelFormat.Format32bppPArgb);using(var g=Graphics.FromImage(image))g.DrawImageUnscaled(source,0,0);}modelImages[path]=image;}uint texture=Texture(image);glBindTexture(0x0DE1,texture);if(filteredModelTextures.Add(texture)){generateModelMipmaps(0x0DE1);glTexParameteri(0x0DE1,0x2801,0x2703);if(ModelAnisotropy>1)glTexParameterf(0x0DE1,0x84FE,ModelAnisotropy);}glTexParameteri(0x0DE1,0x2802,0x2901);glTexParameteri(0x0DE1,0x2803,0x2901);}else glBindTexture(0x0DE1,0);}
  public float HeadY;
  void ModelSettings(float angle,float eye,float aspect,float depth,float centerY,float scale,bool title){PrepareModelProgram();useProgram(modelProgram);F("angle",angle);F("eye",eye);F("headY",HeadY);F("aspect",aspect);F("depth",depth);F("centerY",centerY);F("modelScale",scale);F("title",title?1:0);}
- public bool ImportedConsole(string platform,double angle,float eye,float aspect,int x,int width,int height,float baseDepth=-520,float centerY=556){
+ public bool ImportedConsole(string platform,double angle,float eye,float aspect,int x,int width,int height,float baseDepth=-520,float centerY=556){return ImportedConsole(platform,angle,eye,aspect,x,width,height,baseDepth,centerY,1);}
+ public bool ImportedConsolePreview(string platform,double angle,float eye,float aspect,Rectangle bounds,int fullHeight,float opacity){return ImportedConsoleAt(platform,angle,eye,aspect,bounds.X,fullHeight-bounds.Bottom,bounds.Width,bounds.Height,0,470,opacity);}
+ public bool ImportedConsole(string platform,double angle,float eye,float aspect,int x,int width,int height,float baseDepth,float centerY,float opacity){return ImportedConsoleAt(platform,angle,eye,aspect,x,0,width,height,baseDepth,centerY,opacity);}
+ bool ImportedConsoleAt(string platform,double angle,float eye,float aspect,int x,int viewportY,int width,int height,float baseDepth,float centerY,float opacity){
   string key=ConsoleModels.Key(platform),folder=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"data","models",key.Replace(' ','-'));if(!importedModels.ContainsKey(key)&&!File.Exists(Path.Combine(folder,"model.mesh")))return false;
   ImportedModel model;if(!importedModels.TryGetValue(key,out model)){model=ImportedModel.Load(folder);importedModels[key]=model;foreach(var batch in model.Batches)UploadBatch(batch);}
-  glViewport(x,0,width,height);glMatrixMode(0x1700);glPushMatrix();glLoadIdentity();BeginConsole();ModelSettings((float)angle,eye,aspect,baseDepth,centerY,250,false);
+  glViewport(x,viewportY,width,height);glMatrixMode(0x1700);glPushMatrix();glLoadIdentity();BeginConsole();ModelSettings((float)angle,eye,aspect,baseDepth,centerY,250,false);F("modelOpacity",opacity);F("handheldFill",key=="3DS"?1:0);
   for(int pass=0;pass<2;pass++)foreach(var batch in model.Batches){var m=model.Materials[batch.Material];bool transparent=m.alpha=="BLEND"&&m.@base[3]<.99f;if((pass==1)!=transparent)continue;glDepthMask(transparent?(byte)0:(byte)1);Four("baseFactor",m.@base[0],m.@base[1],m.@base[2],m.@base[3]);Four("material",m.metal,m.rough,m.normalScale,m.alpha=="MASK"?m.cutoff:0);Four("emission",m.emissive[0],m.emissive[1],m.emissive[2],0);
    string[] names={"baseMap","normalMap","roughMap","aoMap","emissionMap"};for(int i=0;i<5;i++)BindModelTexture(names[i],m.textures[i]==""?null:Path.Combine(folder,m.textures[i]),i);DrawBatch(batch);
   }
@@ -93,3 +96,5 @@ public sealed partial class GpuRenderer {
  }
  void DisposeImportedModels(){foreach(var model in importedModels.Values)foreach(var batch in model.Batches){if(batch.VertexBuffer!=0)deleteBuffers(1,ref batch.VertexBuffer);if(batch.IndexBuffer!=0)deleteBuffers(1,ref batch.IndexBuffer);}importedModels.Clear();foreach(var image in modelImages.Values)image.Dispose();modelImages.Clear();filteredModelTextures.Clear();if(modelProgram!=0){deleteProgram(modelProgram);modelProgram=0;}}
 }
+
+

@@ -140,17 +140,38 @@ public static class ConsoleModels {
 }
 
 public partial class DepthWindow {
- double lastConsoleFrame;
- string ConsolePlatform {get{return filter=="Library"||filter=="Favorites"?(FocusedCover==null?null:FocusedCover.Platform):filter;}}
+ static readonly RectangleF ConsolePreviewBounds=new RectangleF(1309.2f,72,100.8f,98);
+ float consoleOpacity=1;double consoleAngle=.45;
+ string presentedConsoleKey;
+ void UpdateConsolePresentation(float dt){
+  string platform=ConsolePlatform;if(platform==null)return;string key=ConsoleModels.Key(platform);
+  if(key!=presentedConsoleKey){presentedConsoleKey=key;consoleOpacity=0;}
+  if(ConsoleVisible){consoleAngle=(consoleAngle+Math.Max(0,dt)*.35)%(Math.PI*2);InvalidateLogical(ConsolePreviewBounds);}
+  float old=consoleOpacity;consoleOpacity+=(1-consoleOpacity)*(1-(float)Math.Exp(-dt*7));
+  if(consoleOpacity>.999f)consoleOpacity=1;
+  if(old!=consoleOpacity)InvalidateLogical(ConsolePreviewBounds);
+ }
+
+ string retainedConsolePlatform;
+ string ConsolePlatform {get{
+  Game focus=FocusedCover;
+  if(panel==""&&!platformFocused&&focus!=null)retainedConsolePlatform=focus.Platform;
+  // Keep the last highlighted hardware through empty space, tabs and panels.
+  // Selecting a console category explicitly updates it in RefreshGames.
+  if(retainedConsolePlatform==null&&filter!="Library"&&filter!="Favorites")retainedConsolePlatform=filter;
+  return retainedConsolePlatform;
+ }}
  bool ConsoleVisible {get{return panel==""&&!libraryMasked&&activeGame==null&&ConsolePlatform!=null;}}
- void AnimateConsole(double now){if(ConsoleVisible&&(gpu!=null||now-lastConsoleFrame>=1.0/24)){lastConsoleFrame=now;InvalidateLogical(new RectangleF(380,295,680,535));}}
  void DrawConsole(Graphics g,int eye,int count,float width){
-  if(!ConsoleVisible)return;float entrance=revealSince<0?1:ArrivalProgress(ArrivalTime,1);float baseDepth=-520+920*(1-entrance),centerY=556-2200*(1-entrance);
-  float aspect=ClientSize.Width*940f/(Math.Max(1,ClientSize.Height)*1440f);
-  if(g==null&&gpu.ImportedConsole(ConsolePlatform,frameClock.Elapsed.TotalSeconds*Math.PI/24+.45,Eye(eye,count),aspect,(int)(eye*width),(int)width,ClientSize.Height,baseDepth,centerY)){gpu.Begin(ClientSize.Width,ClientSize.Height);return;}
-  var polygons=ConsoleModels.Project(ConsolePlatform,frameClock.Elapsed.TotalSeconds*Math.PI/24+.45,Eye(eye,count),aspect,g!=null,baseDepth,centerY);
-  if(g==null){gpu.BeginConsole();foreach(var p in polygons){PointF[] points=new PointF[p.Points.Length];for(int i=0;i<points.Length;i++)points[i]=new PointF(eye*width+p.Points[i].X*width/1440,p.Points[i].Y*ClientSize.Height/940);gpu.ConsolePolygon(points,p.Depths,p.Color);}gpu.EndConsole();}
-  else {Point location;using(var bitmap=ConsoleModels.Rasterize(polygons,out location))g.DrawImage(bitmap,location.X,location.Y,bitmap.Width,bitmap.Height);}
+  if(!ConsoleVisible||consoleOpacity<=0)return;
+  RectangleF bounds=ConsolePreviewBounds;RectangleF pixels=Pixels(bounds,eye,width);
+  float aspect=pixels.Width*count*940/(Math.Max(1,pixels.Height)*1440);
+  // SBS halves are expanded by the display: preserve the full-display lens aspect.
+  if(g==null&&gpu.ImportedConsolePreview(ConsolePlatform,consoleAngle,Eye(eye,count),aspect,Rectangle.Round(pixels),ClientSize.Height,consoleOpacity)){gpu.Begin(ClientSize.Width,ClientSize.Height);return;}
+  var polygons=ConsoleModels.Project(ConsolePlatform,consoleAngle,Eye(eye,count),aspect,g!=null,0,470);
+  foreach(var polygon in polygons)for(int i=0;i<polygon.Points.Length;i++)polygon.Points[i]=new PointF(bounds.X+polygon.Points[i].X*bounds.Width/1440,bounds.Y+polygon.Points[i].Y*bounds.Height/940);
+  if(g==null){gpu.Clip((int)pixels.X,ClientSize.Height-(int)pixels.Bottom,(int)pixels.Width,(int)pixels.Height);gpu.BeginConsole();foreach(var p in polygons){PointF[] points=new PointF[p.Points.Length];for(int i=0;i<points.Length;i++)points[i]=new PointF(eye*width+p.Points[i].X*width/1440,p.Points[i].Y*ClientSize.Height/940);gpu.ConsolePolygon(points,p.Depths,Color.FromArgb((int)(255*consoleOpacity),p.Color));}gpu.EndConsole();}
+  else {var state=g.Save();g.SetClip(bounds,System.Drawing.Drawing2D.CombineMode.Intersect);try{Point location;using(var bitmap=ConsoleModels.Rasterize(polygons,out location))using(var attributes=new System.Drawing.Imaging.ImageAttributes()){var matrix=new System.Drawing.Imaging.ColorMatrix();matrix.Matrix33=consoleOpacity;attributes.SetColorMatrix(matrix);g.DrawImage(bitmap,new Rectangle(location.X,location.Y,bitmap.Width,bitmap.Height),0,0,bitmap.Width,bitmap.Height,GraphicsUnit.Pixel,attributes);}}finally{g.Restore(state);}}
  }
 }
 
@@ -158,5 +179,11 @@ public sealed partial class GpuRenderer {
  [System.Runtime.InteropServices.DllImport("opengl32.dll")] static extern void glVertex3f(float x,float y,float z);
  public void BeginConsole(){glClear(0x0100);glEnable(0x0B71);}
  public void EndConsole(){glDisable(0x0B71);}
- public void ConsolePolygon(PointF[] points,float[] depths,Color color){glDisable(0x0DE1);glColor4f(color.R/255f,color.G/255f,color.B/255f,1);glBegin(6);for(int i=0;i<points.Length;i++)glVertex3f(points[i].X,points[i].Y,depths[i]);glEnd();}
+ public void ConsolePolygon(PointF[] points,float[] depths,Color color){glDisable(0x0DE1);glColor4f(color.R/255f*color.A/255f,color.G/255f*color.A/255f,color.B/255f*color.A/255f,color.A/255f);glBegin(6);for(int i=0;i<points.Length;i++)glVertex3f(points[i].X,points[i].Y,depths[i]);glEnd();}
 }
+
+
+
+
+
+

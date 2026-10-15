@@ -5,8 +5,8 @@ using System.Drawing.Imaging;
 
 public partial class DepthWindow {
  const int ArrivalDuration=3100;
- const int ArrivalStagger=115,ArrivalFirstCoverDelay=3*ArrivalStagger;
- readonly RectangleF[] arrivalRegions={new RectangleF(0,0,1440,102),new RectangleF(0,140,1440,94),new RectangleF(0,240,1440,50),new RectangleF(0,840,1440,100)};
+ const int ArrivalStagger=90,ArrivalFirstCoverDelay=3*ArrivalStagger;
+ readonly RectangleF[] arrivalRegions={new RectangleF(0,0,1440,72),new RectangleF(0,78,1440,70),new RectangleF(0,150,1440,48),new RectangleF(0,888,1440,52)};
  readonly System.Collections.Generic.Dictionary<string,Bitmap> selectionLayers=new System.Collections.Generic.Dictionary<string,Bitmap>();
  string[] arrivalKeys;Bitmap[] arrivalLayers;bool drawingArrivalChrome;
  float ArrivalTime {get{return revealSince<0?ArrivalDuration:frameClock.ElapsedMilliseconds-revealSince;}}
@@ -25,7 +25,7 @@ public partial class DepthWindow {
  }
  void PrepareArrival(){
   if(arrivalLayers==null){arrivalLayers=new Bitmap[arrivalRegions.Length];arrivalKeys=new string[arrivalRegions.Length];}
-  string[] keys={query, (FocusedCover==null?"":FocusedCover.Title)+"|"+shown.Count, filter+"|"+platformFocused+"|"+string.Join("|",Tabs()), (selected==null?"":selected.Platform)+"|"+page+"|"+shown.Count};drawingArrivalChrome=true;
+  string[] keys={query, (FocusedCover==null?"":FocusedCover.Title)+"|"+shown.Count+"|"+GridColumns, filter+"|"+platformFocused+"|"+string.Join("|",Tabs()), (selected==null?"":selected.Platform)+"|"+page+"|"+shown.Count+"|"+GridColumns};drawingArrivalChrome=true;
   try{for(int i=0;i<arrivalRegions.Length;i++){if(arrivalLayers[i]!=null&&arrivalKeys[i]==keys[i])continue;bool reusable=i==1||i==3;string cacheKey=i+"|"+keys[i];Bitmap cached;
    if(reusable&&selectionLayers.TryGetValue(cacheKey,out cached)){arrivalLayers[i]=cached;arrivalKeys[i]=keys[i];continue;}
    if(arrivalLayers[i]!=null&&!reusable){if(gpu!=null)gpu.Forget(arrivalLayers[i]);arrivalLayers[i].Dispose();}arrivalKeys[i]=keys[i];var r=arrivalRegions[i];var b=new Bitmap((int)r.Width*2,(int)r.Height*2,PixelFormat.Format32bppPArgb);arrivalLayers[i]=b;if(reusable){
@@ -55,11 +55,15 @@ public partial class DepthWindow {
    if(ArrivalProgress(ArrivalTime,1)>0)DrawConsole(gpu!=null?null:g,eye,count,width);
    for(int i=1;i<=2;i++)ArrivalImage(g,arrivalLayers[i],arrivalRegions[i],i,eye,count,width);
    DrawScrollPreviews(g,eye,count,width,true);
-   for(int slot=0;slot<Math.Min(10,shown.Count-page*10);slot++){
-    Game game=shown[page*10+slot];ArrivalImage(g,Sprite(game),CardBounds(slot,Hover(game),Eye(eye,count)),3+slot,eye,count,width);
+   for(int slot=0;slot<Math.Min(PageSize,shown.Count-page*PageSize);slot++){
+    Game game=shown[page*PageSize+slot];float progress=ArrivalProgress(ArrivalTime,3+slot);if(progress>0)DrawGameCase(g,game,ArrivalBounds(CardBounds(slot,Hover(game),Eye(eye,count)),Eye(eye,count),progress,3+slot),Hover(game),Eye(eye,count)-headX,eye,width,1);
    }
    if(gpu!=null)gpu.EndClip();else g.Restore(state);
   }
   PaintOpeningBars(g,1);if(gpu!=null)gpu.Finish(false);
  }
 }
+
+
+
+

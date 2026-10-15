@@ -2,17 +2,11 @@
 
 A Windows game-library frontend for Samsung Odyssey 3D monitors. Browse floating cover art over a curved stereo grid, with rotating console models, a depth-animated opening, controller navigation, and optional head-tracked perspective.
 
-**v0.1.0-beta.3 — early public beta.** Developed and tested on one Odyssey 3D setup; broader hardware and emulator compatibility needs community testing. dEPTH renders side-by-side images. Samsung's Odyssey 3D Hub performs the display conversion. dEPTH does not turn arbitrary games into stereoscopic 3D.
-
-## Current source: dEPTH 1.4
-
-The source displays version 1.4 in the header, window title, and About screen. Existing beta 3 release downloads remain available below.
-
-Recent source updates improve library scanning and artwork import, Azahar fullscreen launch preparation, emulator exit recovery, controller handling, and display transitions. Azahar launches prepare fullscreen and disable close confirmation; an emulator that exits during startup returns control to the library. Firmware and keyboard applet files are not included.
+**v1.5 — early public beta.** Developed and tested on one Odyssey 3D setup; broader hardware and emulator compatibility needs community testing. dEPTH renders side-by-side images. Samsung's Odyssey 3D Hub performs the display conversion. dEPTH does not turn arbitrary games into stereoscopic 3D.
 
 ## Download and start
 
-1. Download `dEPTH-v0.1.0-beta.3-win-x64.zip` from Releases and extract the entire archive into a writable folder, such as `C:\Games\dEPTH`. Do not run inside the ZIP or install into Program Files.
+1. Download `dEPTH-v1.5-win-x64.zip` from Releases and extract the entire archive into a writable folder, such as `C:\Games\dEPTH`. Do not run inside the ZIP or install into Program Files.
 2. Install and start Samsung Odyssey 3D Hub and its required display runtime. Confirm your Odyssey monitor works in 3D. Run the included `Enable-Hub-Switching.cmd` once to enable automatic SBS only during dEPTH sessions, or manage Hub conversion manually. Make the Odyssey your primary display for this beta.
 3. Run `Depth.exe`. First-run setup asks for each system's existing emulator executable and game folder. Subfolders are scanned; your games can stay where they are. Steam scanning is optional and does not certify a game's 3D support.
 4. Choose **Save and scan**. The library starts black until Hub reports an active 3D session, then plays the opening animation.
@@ -22,13 +16,16 @@ The frontend is portable and does not require administrator rights. The optional
 
 No games, ROMs, firmware, BIOS, console keys, emulators, personal library, saved states, or game artwork are included. Supply your own lawful game files and existing emulator installations. Keep `SDL2.dll` and the `data/models` folder beside `Depth.exe`.
 
-## What is new in beta 3
+## What is new in 1.5
 
-- A gyro-controlled blue star pointer for compatible Nintendo Switch Pro Controllers, including reliable controller handoff when entering and leaving Dolphin.
-- Smooth pointer hover scrolling, soft 3D selection lift and shadow, and a short depth-aware sparkle trail.
-- Improved keyboard navigation between game rows and platform tabs, an in-app Settings panel, and an About screen.
-- A curved, softened background grid, refined opening audio timing, and optional looping menu audio.
-- `Depth Record.exe`, which launches dEPTH in a visible raw side-by-side presentation and records the complete primary display with system audio to an MP4 on the Desktop.
+- Rounded 3D game cases with soft reflections, smooth selection lift, and pointer-following tilt.
+- Gameplay clips projected onto the curved stereo background, with gentle hover fades and independent quiet audio. The lower display keeps still screenshots and game information.
+- Native video decoding with corrected frame alignment, smooth playback, and ambient-music transitions.
+- Larger rotating console previews in the header, with improved front and overhead lighting for the 3DS.
+- More visible floating dust, compact library spacing, and smoother artwork inspection.
+- Existing controller navigation, gyro handoff, emulator return masking, and recording support retained.
+
+Gameplay clips, screenshots, and game metadata are supplied by the user's local media library; the public package does not bundle them.
 
 The public archive does not redistribute the copyrighted music and startup recordings used by the development installation. To use your own sounds, provide 16-bit PCM WAV files at `data/audio/startup.wav` and `data/audio/menu.wav`.
 

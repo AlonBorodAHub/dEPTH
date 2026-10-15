@@ -82,6 +82,7 @@ public partial class DepthWindow {
 
  Process closingProcess;long closingSince=-1;
  bool forcedGameExit;
+ internal static int GameExitTimeout(Game game){return game!=null&&string.Equals(Path.GetFileNameWithoutExtension(game.Executable),"azahar",StringComparison.OrdinalIgnoreCase)?5000:3000;}
  ControllerInput controllerInput=new ControllerInput();
  PassiveExitInput passiveExit;
  void StopPassiveExit(){if(passiveExit!=null){passiveExit.Dispose();passiveExit=null;}}
@@ -134,6 +135,16 @@ public partial class DepthWindow {
  }
  void CheckController(){if(activeGame!=null&&closingSince<0&&controllerInput.Poll())RequestExit();}
  [DllImport("dwmapi.dll")] static extern int DwmFlush();
+ internal static bool IsAzaharApplicationTitle(string title){return title!=null&&title.StartsWith("Azahar ",StringComparison.Ordinal)&&!title.EndsWith(" | Primary Window",StringComparison.Ordinal)&&!IsAzaharSecondaryTitle(title);}
+ internal static IntPtr FindAzaharApplicationWindow(int processId){
+  IntPtr result=IntPtr.Zero;
+  EnumWindows((window,state)=>{
+   uint pid;GetWindowThreadProcessId(window,out pid);if(pid!=(uint)processId)return true;
+   var title=new System.Text.StringBuilder(512);GetWindowText(window,title,title.Capacity);
+   if(IsAzaharApplicationTitle(title.ToString())){result=window;return false;}return true;
+  },IntPtr.Zero);
+  return result;
+ }
  void RequestExit(){
   if(activeGame==null||closingSince>=0)return;
   ReleaseStereoKey();CoverSecondaryScreen();CoverScreen();DwmFlush();
@@ -142,7 +153,14 @@ public partial class DepthWindow {
    if(pid!=0)closingProcess=Process.GetProcessById((int)pid);
    else if(launchedProcess!=null&&!launchedProcess.HasExited&&activeGame.SteamId=="")closingProcess=Process.GetProcessById(launchedProcess.Id);
    if(closingProcess==null){ReturnFromGame();return;}
-   forcedGameExit=false;closingProcess.CloseMainWindow();closingSince=handoffClock.ElapsedMilliseconds;handoffTimer.Start();
+   forcedGameExit=false;closingSince=handoffClock.ElapsedMilliseconds;
+   // Detached render windows only stop emulation; the hidden application
+   // window owns final shutdown, settings and controller cleanup.
+   IntPtr closeWindow=string.Equals(Path.GetFileNameWithoutExtension(activeGame.Executable),"azahar",StringComparison.OrdinalIgnoreCase)?FindAzaharApplicationWindow(closingProcess.Id):gameWindow;
+   if(closeWindow!=IntPtr.Zero&&IsWindow(closeWindow)&&BelongsToGame(closeWindow)){
+    if(!PostMessage(closeWindow,0x0010,IntPtr.Zero,IntPtr.Zero))closingProcess.CloseMainWindow();
+   }else closingProcess.CloseMainWindow();
+   handoffTimer.Start();
   }catch(InvalidOperationException){FinishExit();}
    catch(Exception ex){ExitFailed(ex);}
  }
@@ -194,7 +212,7 @@ public partial class DepthWindow {
  void TickHandoff(){
 
   if(curtain!=null)SetWindowPos(curtain.Handle,new IntPtr(-1),0,0,0,0,0x0013);
-  if(closingSince>=0){try{if(closingProcess.HasExited){FinishExit();return;}if(handoffClock.ElapsedMilliseconds-closingSince>=3000){forcedGameExit=true;closingProcess.Kill();} }catch(InvalidOperationException){FinishExit();}catch(Exception ex){ExitFailed(ex);}return;}
+  if(closingSince>=0){try{if(closingProcess.HasExited){FinishExit();return;}if(handoffClock.ElapsedMilliseconds-closingSince>=GameExitTimeout(activeGame)){forcedGameExit=true;closingProcess.Kill();} }catch(InvalidOperationException){FinishExit();}catch(Exception ex){ExitFailed(ex);}return;}
   if(returnSince>=0){
    if(fullscreenRefreshAt>=0){
     if(handoffClock.ElapsedMilliseconds<fullscreenRefreshAt)return;

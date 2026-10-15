@@ -71,11 +71,19 @@ public sealed partial class GpuRenderer:IDisposable {
  public void Begin(int width,int height){wglMakeCurrent(dc,context);glViewport(0,0,width,height);glMatrixMode(0x1701);glLoadIdentity();glOrtho(0,width,height,0,-1,1);glMatrixMode(0x1700);glLoadIdentity();}
  public void Forget(Bitmap b){uint id;if(b!=null&&textures.TryGetValue(b,out id)){wglMakeCurrent(dc,context);glDeleteTextures(1,ref id);textures.Remove(b);}}
  uint Texture(Bitmap b){uint id;if(textures.TryGetValue(b,out id))return id;glGenTextures(1,out id);glBindTexture(0x0DE1,id);glTexParameteri(0x0DE1,0x2801,0x2601);glTexParameteri(0x0DE1,0x2800,0x2601);glTexParameteri(0x0DE1,0x2802,0x812F);glTexParameteri(0x0DE1,0x2803,0x812F);var pixels=b.LockBits(new Rectangle(0,0,b.Width,b.Height),ImageLockMode.ReadOnly,PixelFormat.Format32bppPArgb);try{glTexImage2D(0x0DE1,0,0x1908,b.Width,b.Height,0,0x80E1,0x1401,pixels.Scan0);}finally{b.UnlockBits(pixels);}textures.Add(b,id);return id;}
+ [DllImport("opengl32.dll")]static extern void glTexSubImage2D(uint target,int level,int x,int y,int width,int height,uint format,uint type,IntPtr data);
+ public void RefreshImage(Bitmap b){
+  uint id;if(!textures.TryGetValue(b,out id)){Texture(b);return;}glEnable(0x0DE1);glBindTexture(0x0DE1,id);
+  var data=b.LockBits(new Rectangle(0,0,b.Width,b.Height),ImageLockMode.ReadOnly,PixelFormat.Format32bppPArgb);
+  try{glTexSubImage2D(0x0DE1,0,0,0,b.Width,b.Height,0x80E1,0x1401,data.Scan0);}finally{b.UnlockBits(data);}
+ }
  public void Image(Bitmap b,RectangleF r){Image(b,r,1);}
  public void PreloadImage(Bitmap b){Texture(b);}
  public void Image(Bitmap b,RectangleF r,float alpha){glEnable(0x0DE1);glBindTexture(0x0DE1,Texture(b));glColor4f(alpha,alpha,alpha,alpha);glBegin(7);glTexCoord2f(0,0);glVertex2f(r.Left,r.Top);glTexCoord2f(1,0);glVertex2f(r.Right,r.Top);glTexCoord2f(1,1);glVertex2f(r.Right,r.Bottom);glTexCoord2f(0,1);glVertex2f(r.Left,r.Bottom);glEnd();}
  public void Outline(RectangleF r,Color c,float width,float rx,float ry){glDisable(0x0DE1);glColor4f(c.R/255f,c.G/255f,c.B/255f,1);glLineWidth(width);glBegin(2);for(int corner=0;corner<4;corner++){float x=corner==0||corner==3?r.Left+rx:r.Right-rx,y=corner<2?r.Top+ry:r.Bottom-ry;for(int step=0;step<=8;step++){double angle=(180+corner*90+step*90/8.0)*Math.PI/180;glVertex2f(x+rx*(float)Math.Cos(angle),y+ry*(float)Math.Sin(angle));}}glEnd();}
  public void BlackOverlay(int width,int height,float alpha){glDisable(0x0DE1);glColor4f(0,0,0,alpha);glBegin(7);glVertex2f(0,0);glVertex2f(width,0);glVertex2f(width,height);glVertex2f(0,height);glEnd();}
  public void Finish(bool measure){if(measure)glFinish();SwapBuffers(dc);}
- public void Dispose(){if(context!=IntPtr.Zero){wglMakeCurrent(dc,context);DisposeImportedModels();if(trackedGrid!=0)glDeleteLists(trackedGrid,1);if(titleLists!=0)glDeleteLists(titleLists,96);foreach(uint v in textures.Values){uint id=v;glDeleteTextures(1,ref id);}textures.Clear();wglMakeCurrent(IntPtr.Zero,IntPtr.Zero);wglDeleteContext(context);context=IntPtr.Zero;}if(dc!=IntPtr.Zero){ReleaseDC(window,dc);dc=IntPtr.Zero;}}
+ public void Dispose(){if(context!=IntPtr.Zero){wglMakeCurrent(dc,context);DisposeImportedModels();if(trackedGrid!=0)glDeleteLists(trackedGrid,1);if(screenshotSurface!=0)glDeleteLists(screenshotSurface,1);if(titleLists!=0)glDeleteLists(titleLists,96);foreach(uint v in textures.Values){uint id=v;glDeleteTextures(1,ref id);}textures.Clear();wglMakeCurrent(IntPtr.Zero,IntPtr.Zero);wglDeleteContext(context);context=IntPtr.Zero;}if(dc!=IntPtr.Zero){ReleaseDC(window,dc);dc=IntPtr.Zero;}}
 }
+
+

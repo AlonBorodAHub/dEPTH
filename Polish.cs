@@ -16,13 +16,13 @@ public partial class DepthWindow {
   var watch=System.Diagnostics.Stopwatch.StartNew();
   PrepareChrome(lib.Stereo?2:1,ClientSize.Width/(lib.Stereo?2f:1f));gpu.PreloadImage(chrome);
   PrepareArrival();foreach(var layer in arrivalLayers)gpu.PreloadImage(layer);
-  for(int i=page*10;i<Math.Min(shown.Count,page*10+10);i++)gpu.PreloadImage(Sprite(shown[i]));
+  for(int i=page*PageSize;i<Math.Min(shown.Count,page*PageSize+PageSize);i++)gpu.PreloadImage(Sprite(shown[i]));
   // Upload first-page titles before navigation begins; retain the real selection.
   var savedSelected=selected;var savedOver=over;
-  try{for(int i=page*10;i<Math.Min(shown.Count,page*10+10);i++){selected=shown[i];over=null;PrepareArrival();gpu.PreloadImage(arrivalLayers[1]);gpu.PreloadImage(arrivalLayers[3]);}}
+  try{for(int i=page*PageSize;i<Math.Min(shown.Count,page*PageSize+PageSize);i++){selected=shown[i];over=null;PrepareArrival();gpu.PreloadImage(arrivalLayers[1]);gpu.PreloadImage(arrivalLayers[3]);}}
   finally{selected=savedSelected;over=savedOver;PrepareArrival();}
   var systems=new System.Collections.Generic.HashSet<string>();if(ConsolePlatform!=null)systems.Add(ConsolePlatform);
-  for(int i=page*10;i<Math.Min(shown.Count,page*10+10);i++)systems.Add(shown[i].Platform);
+  for(int i=page*PageSize;i<Math.Min(shown.Count,page*PageSize+PageSize);i++)systems.Add(shown[i].Platform);
   foreach(string system in systems)gpu.ImportedConsole(system,.45,0,ClientSize.Width*940f/(ClientSize.Height*1440f),0,ClientSize.Width,ClientSize.Height);
   // Exercise shader/texture uploads in the back buffer, then present black only.
   gpu.Begin(ClientSize.Width,ClientSize.Height);gpu.Black();gpu.Finish(true);openingAssetsPrepared=true;
@@ -88,3 +88,4 @@ public partial class DepthWindow {
  public static float Smooth(float progress){float t=Math.Max(0,Math.Min(1,progress));return t*t*t*(t*(t*6-15)+10);}
  public static float IntroDepth(float progress){return 600*Smooth(progress/.82f);}
 }
+

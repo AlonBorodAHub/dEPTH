@@ -29,6 +29,7 @@ public class Library {
  public bool HeadTracking=true;
  public bool Stereo=false, SwapEyes=false, Fullscreen=false;
  public float Depth=1;
+ public int GridColumns=5;
 }
 public static class Storage {
  public static string Folder=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"data");
@@ -108,7 +109,7 @@ public static class Storage {
 }
 
 public partial class DepthWindow:Form {
- public const string AppVersion="1.4";
+ public const string AppVersion="1.5";
  Library lib; List<Game> shown=new List<Game>();
  IEnumerable<Game> VisibleGames {get{return lib.Games.Where(g=>lib.IsGameVisible(g));}}
  readonly Dictionary<Game,string> coverPaths=new Dictionary<Game,string>();
@@ -154,7 +155,10 @@ public partial class DepthWindow:Form {
     // Paint before the old process exits so the desktop is never exposed.
     resumeCover=new TransitionCurtain(resume.Screen);resumeCover.Show();resumeCover.Refresh();Application.DoEvents();
     if(resume.SecondaryScreen.Width>0&&resume.SecondaryScreen.Height>0){resumeSecondaryCover=new TransitionCurtain(resume.SecondaryScreen);resumeSecondaryCover.Show();resumeSecondaryCover.Refresh();}
-    if(!string.IsNullOrEmpty(resume.CoverReadyEvent)){using(var ready=System.Threading.EventWaitHandle.OpenExisting(resume.CoverReadyEvent))ready.Set();}
+    if(!string.IsNullOrEmpty(resume.CoverReadyEvent)&&!SignalResumeCover(resume.CoverReadyEvent)){
+     // The parent timed out and retained its library. Release late covers.
+     resumeCover.Dispose();if(resumeSecondaryCover!=null)resumeSecondaryCover.Dispose();return;
+    }
     if(resume.ParentProcess>0){try{using(var previous=Process.GetProcessById(resume.ParentProcess)){if(!previous.WaitForExit(5000)){resumeCover.Close();resumeCover.Dispose();if(resumeSecondaryCover!=null)resumeSecondaryCover.Dispose();return;}}}catch(ArgumentException){}}
    }
    // A replacement must acknowledge its black cover before waiting for Hub:
@@ -165,6 +169,10 @@ public partial class DepthWindow:Form {
    if(args.Contains("--render")||args.Contains("--render-sbs")) {win.ClientSize=new Size(1600,1000);win.CreateControl();if(args.Contains("--menu"))win.panel="menu";if(args.Contains("--keyboard"))win.OpenSearch();bool stereo=win.lib.Stereo;win.lib.Stereo=args.Contains("--render-sbs");if(args.Contains("--hover")){win.over=win.shown.FirstOrDefault();if(win.over!=null)win.hover[win.over]=1;}using(var b=new Bitmap(1600,1000))using(var g=Graphics.FromImage(b)){win.OnPaint(new PaintEventArgs(g,new Rectangle(0,0,1600,1000)));b.Save(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,win.lib.Stereo?"preview-sbs.png":"preview.png"));}win.lib.Stereo=stereo;win.Dispose();return;}
    win.PrepareStartup();Application.Run(win);
   }catch(Exception e){RecoverFromManagedError(e);}
+ }
+ internal static bool SignalResumeCover(string name){
+  try{using(var ready=System.Threading.EventWaitHandle.OpenExisting(name))return ready.Set();}
+  catch(System.Threading.WaitHandleCannotBeOpenedException){return false;}
  }
  static void WaitForAutomaticHub(){
   // Do not expose a fullscreen window until the elevated guard has applied
@@ -185,7 +193,12 @@ public partial class DepthWindow:Form {
  public DepthWindow() {
   using(var stream=typeof(DepthWindow).Assembly.GetManifestResourceStream("Depth.AppIcon"))
   using(var icon=new Icon(stream)) Icon=(Icon)icon.Clone();
-  Text="dEPTH "+AppVersion+" | Spatial game library";ClientSize=new Size(1440,940);MinimumSize=new Size(1000,740);StartPosition=FormStartPosition.CenterScreen;
+  Text="dEPTH "+AppVersion+" | Spatial game library";ClientSize=new Size(1440,940);MinimumSize=new Size(1000,740);
+  // CenterScreen can choose the focused tablet when started by a shortcut or
+  // helper. Anchor the initial window to the 3D primary display before Shown
+  // enters fullscreen; resume handoffs may still restore their saved bounds.
+  StartPosition=FormStartPosition.Manual;Rectangle startupDisplay=Screen.PrimaryScreen.WorkingArea;
+  Location=new Point(startupDisplay.Left+(startupDisplay.Width-Width)/2,startupDisplay.Top+(startupDisplay.Height-Height)/2);
   DoubleBuffered=true;KeyPreview=true;BackColor=Color.FromArgb(9,14,25);
   lib=Storage.Load();if(!lib.Games.Any(g=>g.Favorite))filter="Library";RefreshGames();
   lib.Stereo=true;lib.Fullscreen=true;
@@ -199,8 +212,8 @@ public partial class DepthWindow:Form {
   KeyDown+=KeysDown;
   FormClosing+=(s,e)=>{if(escapeRegistered)UnregisterHotKey(Handle,Hotkey);try{Storage.Save(lib);}catch(Exception ex){MessageBox.Show(ex.Message,"Could not save library");}};
  }
- void RefreshGames(){CancelScrollAnimation();keyboardTileFocus=false;ResetPreviewDwell();shown=VisibleGames.Where(g=>(filter=="Library"||filter=="Favorites"&&g.Favorite||g.Platform==filter)&&(query==""||g.Title.IndexOf(query,StringComparison.OrdinalIgnoreCase)>=0)).ToList();over=null;page=Math.Max(0,Math.Min(page,Math.Max(0,(shown.Count-1)/10)));if(selected==null||!shown.Contains(selected))selected=shown.FirstOrDefault();Invalidate();}
- void ChangePage(int d){CancelScrollAnimation();keyboardTileFocus=false;ResetPreviewDwell();page=Math.Max(0,Math.Min(Math.Max(0,(shown.Count-1)/10),page+d));over=null;Invalidate();}
+ void RefreshGames(){cachedTabs=null;CancelScrollAnimation();if(filter!="Library"&&filter!="Favorites")retainedConsolePlatform=filter;keyboardTileFocus=false;ResetPreviewDwell();shown=VisibleGames.Where(g=>(filter=="Library"||filter=="Favorites"&&g.Favorite||g.Platform==filter)&&(query==""||g.Title.IndexOf(query,StringComparison.OrdinalIgnoreCase)>=0)).ToList();over=null;page=Math.Max(0,Math.Min(page,Math.Max(0,(shown.Count-1)/PageSize)));if(selected==null||!shown.Contains(selected))selected=shown.FirstOrDefault();Invalidate();}
+ void ChangePage(int d){CancelScrollAnimation();keyboardTileFocus=false;ResetPreviewDwell();page=Math.Max(0,Math.Min(Math.Max(0,(shown.Count-1)/PageSize),page+d));over=null;Invalidate();}
  PointF Logical(Point p){return StereoMath.Pointer(p,ClientSize);}
  Dictionary<Game,RectangleF> HitMap(Point p){return hits;}
  Color Ink(int a,int r,int g,int b){return Color.FromArgb(a,r,g,b);}
@@ -209,22 +222,23 @@ public partial class DepthWindow:Form {
  void Line(Graphics g,Color c,float x,float y,float x2,float y2,float width=1){using(var p=new Pen(c,width))g.DrawLine(p,x,y,x2,y2);}
  PointF Project(float x,float y,float z,float eye){float k=900/(900-z);return new PointF(720+x*k+eye*(1-k),470+y*k);}
  RectangleF Plane(float x,float y,float w,float h,float z,float eye){PointF p=Project(x,y,z,eye);float k=900/(900-z);return new RectangleF(p.X,p.Y,w*k,h*k);}
- void Button(Graphics g,string id,string label,RectangleF r,bool active=false){buttons[id]=r;Fill(g,active?Color.FromArgb(29,61,70):Color.FromArgb(20,30,44),r);TextAt(g,label,14,active?Color.FromArgb(136,245,221):Color.FromArgb(170,189,202),r.X+14,r.Y+11,r.Width-20);}
+ void Button(Graphics g,string id,string label,RectangleF r,bool active=false){buttons[id]=r;Fill(g,active?Color.FromArgb(29,61,70):Color.FromArgb(20,30,44),r);TextAt(g,label,14,active?Color.FromArgb(136,245,221):Color.FromArgb(170,189,202),r.X+14,r.Y+(r.Height-18)/2,r.Width-20);}
  protected override void OnPaint(PaintEventArgs e){FrameTiming.Frame();long stamp=FrameTiming.Start();try{RenderFast(e.Graphics);}finally{FrameTiming.End("main paint",stamp);}}
  void DrawScene(Graphics g,float eye){if(panel!=""){Fill(g,Color.FromArgb(20,42,57),new RectangleF(0,0,1440,940));DrawControllerPanel(g);return;}
   if(!drawingArrivalChrome)DrawBackdrop(g,eye);
   // Extend past the outer edge so antialiasing cannot expose the bright backdrop.
-  Fill(g,Color.FromArgb(210,8,15,25),new RectangleF(-1,-1,1442,103));
-  TextAt(g,"dEPTH",25,Color.White,46,31,180,FontStyle.Bold);TextAt(g,AppVersion,17,Color.FromArgb(170,189,202),145,37,90);
-  Button(g,"search",query==""?"Search":query,new RectangleF(615,28,270,44));Button(g,"scan","Scan",new RectangleF(904,28,132,44));TextAt(g,"STEREO  3D",14,Color.FromArgb(136,245,221),1066,40,145);Button(g,"settings","Settings",new RectangleF(1205,28,115,44));Button(g,"full","[  ]",new RectangleF(1332,28,62,44));
+  Fill(g,Color.FromArgb(210,8,15,25),new RectangleF(-1,-1,1442,73));
+  TextAt(g,"dEPTH",25,Color.White,46,19,180,FontStyle.Bold);TextAt(g,AppVersion,17,Color.FromArgb(170,189,202),145,25,90);
+  Button(g,"search",query==""?"Search":query,new RectangleF(615,14,270,40));Button(g,"scan","Scan",new RectangleF(904,14,132,40));TextAt(g,"STEREO  3D",14,Color.FromArgb(136,245,221),1066,27,145);Button(g,"settings","Settings",new RectangleF(1205,14,115,40));Button(g,"full","[  ]",new RectangleF(1332,14,62,40));
   string heading=FocusedCover==null?"Library":FocusedCover.Title;
-  float headingSize=38;using(var f=new Font("Segoe UI",headingSize,FontStyle.Bold,GraphicsUnit.Pixel)){float measured=g.MeasureString(heading,f).Width;if(measured>1320)headingSize*=1320/measured;}
-  TextAt(g,heading,headingSize,Color.FromArgb(247,252,253),49,151+(38-headingSize)/2,1340,FontStyle.Bold);TextAt(g,shown.Count+" games",14,Color.FromArgb(22,61,78),52,205,1200);
-  if(!omitPlatformTabs){var tabs=new List<string>{"Library","Favorites"};tabs.AddRange(VisibleGames.Select(x=>x.Platform).Distinct());float tx=52;foreach(string tab in tabs){float tw=tab.Length*8.5f+32;Button(g,"tab:"+tab,tab,new RectangleF(tx,246,tw,40),filter==tab);if(platformFocused&&filter==tab){using(var focusPen=new Pen(Color.FromArgb(160,255,232),2))g.DrawRectangle(focusPen,tx+1,247,tw-2,38);}tx+=tw+8;}}
+  float headingSize=30;using(var f=new Font("Segoe UI",headingSize,FontStyle.Bold,GraphicsUnit.Pixel)){float measured=g.MeasureString(heading,f).Width;if(measured>1110)headingSize*=1110/measured;}
+  TextAt(g,heading,headingSize,Color.FromArgb(247,252,253),49,84+(30-headingSize)/2,1120,FontStyle.Bold);TextAt(g,shown.Count+" games",14,Color.FromArgb(22,61,78),52,126,1200);
+
+  if(!omitPlatformTabs){var tabs=new List<string>{"Library","Favorites"};tabs.AddRange(VisibleGames.Select(x=>x.Platform).Distinct());float tx=52;foreach(string tab in tabs){float tw=tab.Length*8.5f+32;Button(g,"tab:"+tab,tab,new RectangleF(tx,TabTop,tw,TabHeight),filter==tab);if(platformFocused&&filter==tab){using(var focusPen=new Pen(Color.FromArgb(160,255,232),2))g.DrawRectangle(focusPen,tx+1,TabTop+1,tw-2,TabHeight-2);}tx+=tw+8;}}
   if(shown.Count==0){TextAt(g,"No games",28,Color.White,270,440,950,FontStyle.Bold);}
-  Fill(g,Color.FromArgb(240,8,15,25),new RectangleF(0,840,1440,100));Line(g,Color.FromArgb(40,105,150,164),48,840,1392,840);
-  TextAt(g,(selected==null?"":selected.Platform+"    ")+"A  Play    B  Back    L/R  Tabs    X  Favorite    Y  Search    +  Menu",12,Color.FromArgb(130,155,172),52,891,890);
-  Button(g,"prev","<",new RectangleF(969,866,42,40));TextAt(g,(page+1)+" / "+Math.Max(1,(shown.Count+9)/10),13,Color.White,1027,876,75);Button(g,"next",">",new RectangleF(1101,866,42,40));Button(g,"edit","Edit",new RectangleF(1160,866,119,40));Button(g,"play","Play",new RectangleF(1290,866,105,40),true);
+  Fill(g,Color.FromArgb(240,8,15,25),new RectangleF(0,888,1440,52));Line(g,Color.FromArgb(40,105,150,164),48,888,1392,888);
+  TextAt(g,(selected==null?"":selected.Platform+"    ")+"A  Play    B  Back    L/R  Tabs    X  Favorite    Y  Search    +  Menu",12,Color.FromArgb(130,155,172),52,909,890);
+  Button(g,"prev","<",new RectangleF(969,898,42,32));TextAt(g,(page+1)+" / "+Math.Max(1,(shown.Count+PageSize-1)/PageSize),13,Color.White,1027,905,75);Button(g,"next",">",new RectangleF(1101,898,42,32));Button(g,"edit","Edit",new RectangleF(1160,898,119,32));Button(g,"play","Play",new RectangleF(1290,898,105,32),true);
  }
  void DrawBackdropBase(Graphics g){
   using(var bg=new LinearGradientBrush(new Rectangle(0,0,1440,940),Color.FromArgb(102,155,175),Color.FromArgb(38,76,112),70f))g.FillRectangle(bg,0,0,1440,940);
@@ -247,7 +261,14 @@ public partial class DepthWindow:Form {
    int seed=game.Title.Aggregate(17,(v,c)=>unchecked(v*31+c));Color a=Color.FromArgb(28+Math.Abs(seed%40),45+Math.Abs(seed%50),66+Math.Abs(seed%65));using(var b=new LinearGradientBrush(r,a,Color.FromArgb(12,22,36),55))g.FillRectangle(b,r);
    using(var pen=new Pen(Color.FromArgb(65,143,233,220),1.5f))for(int n=0;n<6;n++)g.DrawEllipse(pen,r.X+r.Width*.2f-n*13,r.Y+25+n*8,r.Width*.65f+n*8,r.Height*.55f);
   }
-  if(game.Favorite)TextAt(g,"★",17,Color.FromArgb(149,255,219),r.Right-30,r.Y+11,25);
+  if(game.Favorite)DrawFavoriteBadge(g,r);
+ }
+ static void DrawFavoriteBadge(Graphics g,RectangleF cover){
+  var badge=new RectangleF(cover.Right-36,8,28,28);
+  var points=new PointF[10];
+  for(int i=0;i<points.Length;i++){double angle=-Math.PI/2+i*Math.PI/5;float radius=i%2==0?10:4.5f;points[i]=new PointF(badge.X+14+(float)Math.Cos(angle)*radius,badge.Y+14+(float)Math.Sin(angle)*radius);}
+  using(var fill=new LinearGradientBrush(badge,Color.FromArgb(105,215,255),Color.FromArgb(18,84,240),65f))g.FillPolygon(fill,points);
+  using(var edge=new Pen(Color.FromArgb(125,215,255),1f))g.DrawPolygon(edge,points);
  }
  Image GetCover(Game game){string path;if(!coverPaths.TryGetValue(game,out path)){path=game.Cover;if(string.IsNullOrEmpty(path)){string cached=Path.Combine(Storage.Folder,"covers",SafeName(game)+".jpg");if(File.Exists(cached))path=cached;}coverPaths[game]=path;}
   if(string.IsNullOrEmpty(path))return null;if(images.ContainsKey(path))return images[path];try{using(var temp=Image.FromFile(path))images[path]=new Bitmap(temp);}catch{images[path]=null;}return images[path];
@@ -260,7 +281,7 @@ public partial class DepthWindow:Form {
  void Search(){OpenSearch();Invalidate();}
  void Scan(){OpenScan();}
  void Edit(Game g){editingOriginal=g;editingGame=Storage.Json.Deserialize<Game>(Storage.Json.Serialize(g));panel="edit";menuIndex=0;Invalidate();}
- void Launch(Game game){UiSound(true);try{BeginGame(game);}catch(Exception ex){panel="menu";menuIndex=0;panelMessage="Could not launch "+game.Title+": "+ex.Message;Invalidate();}}
+ void Launch(Game game){StopCompanionVideo();UiSound(true);try{BeginGame(game);}catch(Exception ex){panel="menu";menuIndex=0;panelMessage="Could not launch "+game.Title+": "+ex.Message;Invalidate();}}
  void Return(){RequestExit();}
  protected override void WndProc(ref Message m){if(m.Msg==PassiveExitInput.Message&&passiveExit!=null&&m.WParam.ToInt32()==passiveExit.Token&&activeGame!=null)RequestExit();if(m.Msg==0x312&&m.WParam.ToInt32()==Hotkey){Return();return;}base.WndProc(ref m);}
  void Fullscreen(){if(!full){oldBounds=Bounds;FormBorderStyle=FormBorderStyle.None;WindowState=FormWindowState.Normal;Bounds=Screen.FromControl(this).Bounds;full=true;}else{FormBorderStyle=FormBorderStyle.Sizable;Bounds=oldBounds;full=false;}lib.Fullscreen=full;Storage.Save(lib);Invalidate();}
@@ -309,6 +330,17 @@ public static class SelfTest {
   File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"self-test.txt"),"PASS: Steam routing, invalid IDs, ROM quoting, shell disabled, scan idempotence, profile preservation, JSON round trip. Discovered "+count+" games.");
  }
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

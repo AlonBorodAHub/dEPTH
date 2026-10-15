@@ -76,7 +76,7 @@ public partial class DepthWindow {
   gyroPointerActive=true;pointerInside=true;lastMouseMotion=frameClock.ElapsedMilliseconds;if(platformFocused){platformFocused=false;Invalidate();}
   if(ScrollAnimating){over=null;InvalidatePointer();return;}
   if(panel!=""){over=null;UpdatePanelHover();InvalidatePointer();return;}
-  RebuildHits();Game next=GameAt(pointer);if(next!=over){over=next;InvalidateLogical(new RectangleF(40,140,1360,90));if(next!=null)UiSound(false);}
+  RebuildHits();Game next=GameAt(pointer);if(next!=over){over=next;InvalidateLogical(new RectangleF(40,78,1360,70));if(next!=null)UiSound(false);}
   InvalidateCard(over);InvalidatePointer();
  }
  bool ActivateGyroPointer(uint pressed){
@@ -85,6 +85,7 @@ public partial class DepthWindow {
   ClickScene(this,new MouseEventArgs(MouseButtons.Left,1,(int)(pointer.X*ClientSize.Width/1440),(int)(pointer.Y*ClientSize.Height/940),0));return true;
  }
 }
+
 
 
 

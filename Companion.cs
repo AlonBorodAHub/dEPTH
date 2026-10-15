@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
-public class CompanionMedia {public string CoverSource="",Image="",Summary="",Details="",ImageSource="",InfoSource="",Credit="";}
+public class CompanionMedia {public string CoverSource="",Image="",Summary="",Details="",ImageSource="",InfoSource="",Credit="",Video="",VideoSource="",VideoCredit="";}
 sealed class CompanionWindow:Form {
  public Action<Graphics,Size> Draw;
  public Action<GpuRenderer,Size> DrawGpu;GpuRenderer renderer;bool rendererAttempted;
@@ -28,10 +28,10 @@ public partial class DepthWindow {
  bool CompanionOpeningBlocked {get{return startupOpening||libraryMasked||introSince>=0||revealSince>=0;}}
  float CompanionAlpha(){return CompanionOpeningBlocked||AzaharPlaying()||secondaryReturnCurtain!=null||companionRevealSince<0?0:Smooth((frameClock.ElapsedMilliseconds-companionRevealSince)/1000f);}
  void InitializeCompanion(){companionTimer=new Timer{Interval=33};companionTimer.Tick+=(s,e)=>{long stamp=FrameTiming.Start();try{UpdateCompanion();}finally{FrameTiming.End("companion update",stamp);}};companionTimer.Start();}
- void DisposeCompanion(){if(companionTimer!=null)companionTimer.Dispose();if(companion!=null)companion.Dispose();var frames=new HashSet<Bitmap>(companionFrames.Values);if(companionBackground!=null)frames.Add(companionBackground);foreach(var frame in frames)frame.Dispose();companionFrames.Clear();}
+ void DisposeCompanion(){DisposeCompanionVideo();if(companionTimer!=null)companionTimer.Dispose();if(companion!=null)companion.Dispose();var frames=new HashSet<Bitmap>(companionFrames.Values);if(companionBackground!=null)frames.Add(companionBackground);foreach(var frame in frames)frame.Dispose();companionFrames.Clear();}
  bool AzaharPlaying(){return activeGame!=null&&string.Equals(System.IO.Path.GetFileNameWithoutExtension(activeGame.Executable),"azahar",StringComparison.OrdinalIgnoreCase);}
  void UpdateCompanion(){
-  if(!Visible)return;
+  if(!Visible){return;}
   if(CompanionOpeningBlocked||secondaryReturnCurtain!=null)companionRevealSince=-1;else if(companionRevealSince<0)companionRevealSince=frameClock.ElapsedMilliseconds;
   var screens=Screen.AllScreens;int target=LowerDisplay(Screen.FromControl(this).Bounds,screens.Select(s=>s.Bounds).ToArray());
   if(target<0){if(companion!=null)companion.Hide();return;}
@@ -47,7 +47,7 @@ public partial class DepthWindow {
   }
   Game game=activeGame??FocusedCover;bool dim=activeGame!=null;string cover=game==null?"":game.Cover;
   if(game!=companionGame||cover!=companionCover||dim!=companionDim){companionGame=game;companionCover=cover;companionDim=dim;changed=true;}
-  float alpha=CompanionAlpha();if(alpha!=lastCompanionAlpha){changed=true;lastCompanionAlpha=alpha;}companionTimer.Interval=33;
+  float alpha=CompanionAlpha();if(alpha!=lastCompanionAlpha){changed=true;lastCompanionAlpha=alpha;}
   PrepareCompanionFrame(bounds.Size);if(!companion.Visible){companion.Show();changed=true;}if(changed)companion.Invalidate();
   if(secondaryReturnCurtain!=null&&!CompanionOpeningBlocked&&activeGame==null&&companionBackground!=null&&companionFrameGame==companionGame&&companionFrameCover==companionCover&&companionFrameSize==bounds.Size){
    // Paint the successor before removing the last cover, then begin its fade.
@@ -59,8 +59,9 @@ public partial class DepthWindow {
  Image CompanionImage(CompanionMedia media){if(string.IsNullOrEmpty(media.Image))return null;string path=Path.Combine(Storage.Folder,media.Image);if(!images.ContainsKey(path)){try{using(var file=Image.FromFile(path))images[path]=new Bitmap(file);}catch{images[path]=null;}}return images[path];}
  void PaintCompanionGpu(GpuRenderer renderer,Size size){
   renderer.Begin(size.Width,size.Height);float alpha=CompanionAlpha();
-  if(alpha<=0||companionBackground==null){renderer.Black();renderer.Finish(false);return;}
-  renderer.Image(companionBackground,new RectangleF(0,0,size.Width,size.Height));
+  if(alpha<=0){renderer.Black();renderer.Finish(false);return;}
+  if(companionBackground==null)renderer.Black();else renderer.Image(companionBackground,new RectangleF(0,0,size.Width,size.Height));
+
   float opacity=alpha*(companionDim?50/255f:1);if(opacity<1)renderer.BlackOverlay(size.Width,size.Height,1-opacity);
   renderer.Finish(false);
  }
@@ -68,6 +69,7 @@ public partial class DepthWindow {
   if(size.Width<=0||size.Height<=0)return;
   float openingAlpha=CompanionAlpha();if(openingAlpha<=0){g.Clear(Color.Black);return;}
   if(companionBackground!=null)g.DrawImageUnscaled(companionBackground,0,0);else g.Clear(Color.Black);
+
   if(companionDim)using(var shade=new SolidBrush(Color.FromArgb(205,0,0,0)))g.FillRectangle(shade,0,0,size.Width,size.Height);
   if(openingAlpha<1)using(var shade=new SolidBrush(Color.FromArgb((int)(255*(1-openingAlpha)),0,0,0)))g.FillRectangle(shade,0,0,size.Width,size.Height);
  }
@@ -94,6 +96,9 @@ public partial class DepthWindow {
   Image art=null;try{if(!string.IsNullOrEmpty(media.Image))art=new Bitmap(Path.Combine(Storage.Folder,media.Image));}catch{}
   if(art!=null){using(art){g.InterpolationMode=InterpolationMode.HighQualityBicubic;float scale=Math.Max(size.Width/(float)art.Width,size.Height/(float)art.Height),w=art.Width*scale,h=art.Height*scale;g.DrawImage(art,new RectangleF((size.Width-w)/2,(size.Height-h)/2,w,h));}}
   else{var state=g.Save();g.ScaleTransform(size.Width/1440f,size.Height/940f);DrawBackdrop(g,0);g.Restore(state);}
+  DrawCompanionInfo(g,size,game,media,false);
+ }
+ void DrawCompanionInfo(Graphics g,Size size,Game game,CompanionMedia media,bool video){
   // White typography stays legible over bright gameplay without obscuring the scene.
   using(var shade=new LinearGradientBrush(new Rectangle(0,0,size.Width,size.Height),Color.FromArgb(10,0,0,0),Color.FromArgb(230,0,0,0),90f))g.FillRectangle(shade,0,0,size.Width,size.Height);
   float margin=size.Width*.055f,textWidth=size.Width*.86f,top=size.Height*.58f;
@@ -107,6 +112,11 @@ public partial class DepthWindow {
    g.DrawString(media.Summary,bodyFont,Brushes.White,new RectangleF(margin,size.Height*.79f,textWidth,size.Height*.14f),format);
   }
   using(var creditFont=new Font("Segoe UI",Math.Max(10,size.Height*.016f),GraphicsUnit.Pixel))
-  using(var creditBrush=new SolidBrush(Color.FromArgb(185,255,255,255)))g.DrawString(media.Credit,creditFont,creditBrush,margin,size.Height*.955f);
+  using(var creditBrush=new SolidBrush(Color.FromArgb(185,255,255,255)))g.DrawString(video?media.VideoCredit:media.Credit,creditFont,creditBrush,margin,size.Height*.955f);
  }
 }
+
+
+
+
+
