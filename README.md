@@ -2,14 +2,14 @@
 
 A Windows game-library frontend for Samsung Odyssey 3D monitors. Browse floating cover art over a curved stereo grid, with rotating console models, a depth-animated opening, controller navigation, and optional head-tracked perspective.
 
-**v1.5 — early public beta.** Developed and tested on one Odyssey 3D setup; broader hardware and emulator compatibility needs community testing. dEPTH renders side-by-side images. Samsung's Odyssey 3D Hub performs the display conversion. dEPTH does not turn arbitrary games into stereoscopic 3D.
+**v1.5 â€” early public beta.** Developed and tested on one Odyssey 3D setup; broader hardware and emulator compatibility needs community testing. dEPTH renders side-by-side images. Samsung's Odyssey 3D Hub performs the display conversion. dEPTH does not turn arbitrary games into stereoscopic 3D.
 
 ## Download and start
 
 1. Download `dEPTH-v1.5-win-x64.zip` from Releases and extract the entire archive into a writable folder, such as `C:\Games\dEPTH`. Do not run inside the ZIP or install into Program Files.
 2. Install and start Samsung Odyssey 3D Hub and its required display runtime. Confirm your Odyssey monitor works in 3D. Run the included `Enable-Hub-Switching.cmd` once to enable automatic SBS only during dEPTH sessions, or manage Hub conversion manually. Make the Odyssey your primary display for this beta.
 3. Run `Depth.exe`. First-run setup asks for each system's existing emulator executable and game folder. Subfolders are scanned; your games can stay where they are. Steam scanning is optional and does not certify a game's 3D support.
-4. Choose **Save and scan**. The library starts black until Hub reports an active 3D session, then plays the opening animation.
+4. Choose **Save and scan**. The library waits for Hub to confirm an active 3D session, then plays the opening animation. If conversion cannot start, a visible recovery window offers Retry 3D, Open 2D library, or Close.
 5. Run `Setup.cmd` while dEPTH is closed to add or change scan folders. Edited game profiles are preserved on rescans; removing a source does not delete previously imported games.
 
 The frontend is portable and does not require administrator rights. The optional Hub switching helper requires one administrator approval and installs a background task at Windows sign-in. Windows x64, .NET Framework 4.8, an OpenGL-capable graphics driver, and a working Odyssey 3D Hub installation are required. Samsung/Leia runtimes are not bundled. The executable is unsigned.
@@ -47,7 +47,7 @@ On NVIDIA systems, the recorder uses Desktop Duplication and NVENC to target con
 | Switch | Import XCI/NSP files with an existing compatible emulator and launch arguments. Stereo support is setup-specific. No emulator downloads or console keys are provided. |
 | PC / Steam | Optional installed-library scan, or manually add an executable. Steam VR titles can be imported too; import does not mean stereo compatibility. |
 
-Other systems can be added manually through **Settings → Add game**, with an executable and arguments. `{rom}` is replaced with the quoted game path. Test each emulator's 3D output independently before launching it through dEPTH.
+Other systems can be added manually through **Settings â†’ Add game**, with an executable and arguments. `{rom}` is replaced with the quoted game path. Test each emulator's 3D output independently before launching it through dEPTH.
 
 This beta does not automatically configure emulators, install stereo modifications, or apply widescreen hacks. The optional helper changes Hub conversion settings during dEPTH sessions. Emulators retain responsibility for game saves and stereo output. Launching Dolphin supplies session-only fullscreen and stop-confirmation options.
 
@@ -75,7 +75,7 @@ Run enable again if you move or upgrade dEPTH into another folder. To remove the
 
 Save in-game before exiting. dEPTH first requests a normal game close, then can terminate an unresponsive launched process. Head-tracked perspective can be turned off in Settings. Favorites opens by default when favorites exist; otherwise Library opens.
 
-The code includes optional Home/Capture and trigger-chord integrations, but these are **not plug-and-play across emulators**. Native mappings must be configured separately. Trigger + D-pad sends F17–F20 to compatible Flycast setups and F19/F20 for Azahar depth; Dolphin uses its own native mappings. Per-game stereo persistence/reset is disabled in fresh public libraries because it requires additional native configuration. Do not assume these shortcuts save or restore settings in this beta.
+The code includes optional Home/Capture and trigger-chord integrations, but these are **not plug-and-play across emulators**. Native mappings must be configured separately. Trigger + D-pad sends F17â€“F20 to compatible Flycast setups and F19/F20 for Azahar depth; Dolphin uses its own native mappings. Per-game stereo persistence/reset is disabled in fresh public libraries because it requires additional native configuration. Do not assume these shortcuts save or restore settings in this beta.
 
 ## Artwork and second screen
 
@@ -85,7 +85,7 @@ An optional extended desktop display below the Odyssey shows companion details. 
 
 ## Troubleshooting and data
 
-- **Black startup / Hub retry dialog:** ensure Hub is running with automatic SBS conversion, the Odyssey is primary, and the display camera can track you. dEPTH deliberately waits for fresh Hub log evidence before revealing SBS frames. This relies on Hub's current log format and may need updates for other versions.
+- **Black startup / Windows ding:** startup recovery now appears in front after 30 seconds. Choose Retry 3D after checking Hub automatic SBS, the primary Odyssey display and camera, or Open 2D library to configure and browse without Hub. You can also run `Start-2D.cmd` (or `Depth.exe --2d`) immediately. The 2D library is windowed and does not bypass game conversion checks. Details are saved to `data/startup-diagnostics.txt`; review local paths before sharing. Unexpected managed errors display a visible message and are logged to `managed-error.log` beside the executable.
 - **Game stays black:** verify the game independently produces SBS and Hub detects it. Unsupported or ordinary 2D games may fail the conversion gate. Controller L3+R3 returns to the library.
 - **Missing game:** use Setup again or add a manual profile. Only supported file extensions are scanned; no archive extraction is performed.
 - **No controller:** confirm the controller is connected before launching and retain the included x64 SDL2 DLL. Button labels follow SDL mappings and may vary by controller.

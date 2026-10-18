@@ -126,6 +126,7 @@ public partial class DepthWindow:Form {
  [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
  [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
  [DllImport("user32.dll",EntryPoint="SystemParametersInfoW")] static extern bool RestoreCursorScheme(uint action,uint parameter,IntPtr value,uint flags);
+ [DllImport("user32.dll",EntryPoint="MessageBoxW",CharSet=CharSet.Unicode)] static extern int StartupMessage(IntPtr owner,string text,string caption,uint flags);
  static int fatalErrorReported;
  static void RecoverFromManagedError(Exception error){
   if(System.Threading.Interlocked.Exchange(ref fatalErrorReported,1)!=0){Environment.Exit(1);return;}
@@ -133,6 +134,7 @@ public partial class DepthWindow:Form {
   // Do not invoke normal renderer/audio disposal after an unhandled error:
   // it may be the failing component. Process exit releases our windows only.
   try{RestoreCursorScheme(0x0057,0,IntPtr.Zero,0);}catch{}
+  try{StartupMessage(IntPtr.Zero,"dEPTH could not start.\n\n"+error.Message+"\n\nDetails were saved to managed-error.log beside Depth.exe.","dEPTH startup error",0x00050010);}catch{}
   Environment.Exit(1);
  }
  [STAThread] public static void Main(string[] args) {
@@ -164,30 +166,34 @@ public partial class DepthWindow:Form {
    // A replacement must acknowledge its black cover before waiting for Hub:
    // native-game cleanup may hold automatic conversion off beyond the parent's
    // cover timeout. Only the real library window needs automatic SBS ready.
-   if(!args.Any(a=>a.StartsWith("--render"))&&!DepthWindow.RawSbsRecording)WaitForAutomaticHub();
-   var win=new DepthWindow();if(setupRequested)win.OpenScan();if(resume!=null){win.secondaryReturnCurtain=resumeSecondaryCover;win.RestoreLibrary(resume);win.Shown+=(s,e)=>{win.Update();resumeCover.Close();resumeCover.Dispose();win.BringToFront();win.Activate();SetForegroundWindow(win.Handle);};}
+   bool start2D=args.Contains("--2d");
+   if(!args.Any(a=>a.StartsWith("--render"))&&!DepthWindow.RawSbsRecording&&!start2D)start2D=!WaitForAutomaticHub();
+   var win=new DepthWindow();if(start2D)win.Use2DLibrary();if(setupRequested)win.OpenScan();if(resume!=null){win.secondaryReturnCurtain=resumeSecondaryCover;win.RestoreLibrary(resume);win.Shown+=(s,e)=>{win.Update();resumeCover.Close();resumeCover.Dispose();win.BringToFront();win.Activate();SetForegroundWindow(win.Handle);};}
    if(args.Contains("--render")||args.Contains("--render-sbs")) {win.ClientSize=new Size(1600,1000);win.CreateControl();if(args.Contains("--menu"))win.panel="menu";if(args.Contains("--keyboard"))win.OpenSearch();bool stereo=win.lib.Stereo;win.lib.Stereo=args.Contains("--render-sbs");if(args.Contains("--hover")){win.over=win.shown.FirstOrDefault();if(win.over!=null)win.hover[win.over]=1;}using(var b=new Bitmap(1600,1000))using(var g=Graphics.FromImage(b)){win.OnPaint(new PaintEventArgs(g,new Rectangle(0,0,1600,1000)));b.Save(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,win.lib.Stereo?"preview-sbs.png":"preview.png"));}win.lib.Stereo=stereo;win.Dispose();return;}
    win.PrepareStartup();Application.Run(win);
-  }catch(Exception e){RecoverFromManagedError(e);}
+  }catch(OperationCanceledException){return;}catch(Exception e){RecoverFromManagedError(e);}
  }
  internal static bool SignalResumeCover(string name){
   try{using(var ready=System.Threading.EventWaitHandle.OpenExisting(name))return ready.Set();}
   catch(System.Threading.WaitHandleCannotBeOpenedException){return false;}
  }
- static void WaitForAutomaticHub(){
+ static bool WaitForAutomaticHub(){
   // Do not expose a fullscreen window until the elevated guard has applied
   // automatic SBS. Process polling alone loses the race with Hub detection.
   string config=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),@"dEPTH\HubSessionPaths.json");
-  if(!File.Exists(config))return;
+  if(!File.Exists(config))return true;
   var paths=Storage.Json.Deserialize<string[]>(File.ReadAllText(config));
-  if(!paths.Any(p=>string.Equals(Path.GetFullPath(p),Application.ExecutablePath,StringComparison.OrdinalIgnoreCase)))return;
+  if(!paths.Any(p=>string.Equals(Path.GetFullPath(p),Application.ExecutablePath,StringComparison.OrdinalIgnoreCase)))return true;
   while(true){
    var timer=Stopwatch.StartNew();
    while(timer.ElapsedMilliseconds<15000){
-    try{using(var ready=System.Threading.EventWaitHandle.OpenExisting(@"Local\dEPTH.HubAutomaticReady",System.Security.AccessControl.EventWaitHandleRights.Synchronize)){if(ready.WaitOne(200))return;}}
+    try{using(var ready=System.Threading.EventWaitHandle.OpenExisting(@"Local\dEPTH.HubAutomaticReady",System.Security.AccessControl.EventWaitHandleRights.Synchronize)){if(ready.WaitOne(200))return true;}}
     catch(System.Threading.WaitHandleCannotBeOpenedException){System.Threading.Thread.Sleep(200);}
+    catch(UnauthorizedAccessException){break;}
    }
-   if(MessageBox.Show("The Hub helper has not enabled automatic 3D yet. Make sure Odyssey 3D Hub and the dEPTH Hub Session task are running.","dEPTH startup",MessageBoxButtons.RetryCancel)!=DialogResult.Retry)throw new OperationCanceledException("Startup cancelled before fullscreen conversion.");
+   DialogResult choice=StartupRecovery("The optional Hub helper has not enabled automatic 3D. Start Odyssey 3D Hub and enable Hub switching from this application folder. You can retry or open the library in windowed 2D.");
+   if(choice==DialogResult.Ignore)return false;
+   if(choice!=DialogResult.Retry)throw new OperationCanceledException("Startup cancelled before fullscreen conversion.");
   }
  }
  public DepthWindow() {
@@ -229,7 +235,7 @@ public partial class DepthWindow:Form {
   // Extend past the outer edge so antialiasing cannot expose the bright backdrop.
   Fill(g,Color.FromArgb(210,8,15,25),new RectangleF(-1,-1,1442,73));
   TextAt(g,"dEPTH",25,Color.White,46,19,180,FontStyle.Bold);TextAt(g,AppVersion,17,Color.FromArgb(170,189,202),145,25,90);
-  Button(g,"search",query==""?"Search":query,new RectangleF(615,14,270,40));Button(g,"scan","Scan",new RectangleF(904,14,132,40));TextAt(g,"STEREO  3D",14,Color.FromArgb(136,245,221),1066,27,145);Button(g,"settings","Settings",new RectangleF(1205,14,115,40));Button(g,"full","[  ]",new RectangleF(1332,14,62,40));
+  Button(g,"search",query==""?"Search":query,new RectangleF(615,14,270,40));Button(g,"scan","Scan",new RectangleF(904,14,132,40));TextAt(g,lib.Stereo?"STEREO  3D":"2D LIBRARY",14,Color.FromArgb(136,245,221),1066,27,145);Button(g,"settings","Settings",new RectangleF(1205,14,115,40));Button(g,"full","[  ]",new RectangleF(1332,14,62,40));
   string heading=FocusedCover==null?"Library":FocusedCover.Title;
   float headingSize=30;using(var f=new Font("Segoe UI",headingSize,FontStyle.Bold,GraphicsUnit.Pixel)){float measured=g.MeasureString(heading,f).Width;if(measured>1110)headingSize*=1110/measured;}
   TextAt(g,heading,headingSize,Color.FromArgb(247,252,253),49,84+(30-headingSize)/2,1120,FontStyle.Bold);TextAt(g,shown.Count+" games",14,Color.FromArgb(22,61,78),52,126,1200);

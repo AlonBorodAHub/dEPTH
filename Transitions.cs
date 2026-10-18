@@ -78,7 +78,7 @@ public partial class DepthWindow {
  bool ConversionWindowVisible(){bool found=false;Rectangle screen=Screen.FromControl(this).Bounds;EnumWindows((window,state)=>{if(!IsWindowVisible(window)||IsIconic(window))return true;WindowRect r;if(!GetWindowRect(window,out r)||r.Left>screen.Left+8||r.Top>screen.Top+8||r.Right<screen.Right-8||r.Bottom<screen.Bottom-8)return true;uint pid;GetWindowThreadProcessId(window,out pid);try{using(var process=Process.GetProcessById((int)pid))if(process.ProcessName=="Odyssey3DPlayer"){found=true;return false;}}catch{}return true;},IntPtr.Zero);return found;}
  bool ConversionReady(IntPtr target){return StableConversion(HubReady(target)&&ConversionWindowVisible(),handoffClock.ElapsedMilliseconds,ref hubStableSince);}
  static bool StableConversion(bool confirmed,long now,ref long since){if(!confirmed){since=-1;return false;}if(since<0)since=now;return now-since>=1000;}
- bool LibraryConversionReady(){return RawSbsRecording||ConversionReady(Handle);}
+ bool LibraryConversionReady(){return library2D||RawSbsRecording||ConversionReady(Handle);}
 
  Process closingProcess;long closingSince=-1;
  bool forcedGameExit;
@@ -86,7 +86,17 @@ public partial class DepthWindow {
  ControllerInput controllerInput=new ControllerInput();
  PassiveExitInput passiveExit;
  void StopPassiveExit(){if(passiveExit!=null){passiveExit.Dispose();passiveExit=null;}}
- bool libraryMasked;
+ bool libraryMasked,library2D;
+ void Use2DLibrary(){library2D=true;lib.Stereo=false;lib.Fullscreen=false;startupOpening=false;introSince=-1;revealSince=-1;libraryMasked=false;returnSince=-1;if(handoffTimer!=null)handoffTimer.Stop();RemoveCurtain();RemoveSecondaryCurtain();if(full)Fullscreen();Text="dEPTH "+AppVersion+" | 2D library";Invalidate();}
+ static DialogResult StartupRecovery(string detail){
+  using(var dialog=new Form{Text="dEPTH: 3D connection",ClientSize=new Size(650,245),StartPosition=FormStartPosition.CenterScreen,FormBorderStyle=FormBorderStyle.FixedDialog,MaximizeBox=false,MinimizeBox=false,TopMost=true}){
+   var text=new Label{Left=22,Top=20,Width=606,Height=150,Text=detail};
+   var retry=new Button{Left=170,Top=188,Width=140,Height=34,Text="Retry 3D",DialogResult=DialogResult.Retry};
+   var mono=new Button{Left=320,Top=188,Width=160,Height=34,Text="Open 2D library",DialogResult=DialogResult.Ignore};
+   var close=new Button{Left=490,Top=188,Width=138,Height=34,Text="Close",DialogResult=DialogResult.Cancel};
+   dialog.Controls.AddRange(new Control[]{text,retry,mono,close});dialog.AcceptButton=retry;dialog.CancelButton=close;return dialog.ShowDialog();
+  }
+ }
  bool resumeLibrary;
  Rectangle returnScreen;long fullscreenRefreshAt=-1;bool returnRefreshRetried;
  delegate bool WindowVisitor(IntPtr window,IntPtr state);
@@ -110,7 +120,7 @@ public partial class DepthWindow {
  void RemoveSecondaryCurtain(){if(secondaryReturnCurtain!=null){secondaryReturnCurtain.Close();secondaryReturnCurtain.Dispose();secondaryReturnCurtain=null;}}
  void RemoveCurtain(){if(curtain!=null){curtain.Close();curtain.Dispose();curtain=null;}}
  void DisposeTransitions(){StopPassiveExit();StopWatchingGameVisibility();ReleaseNativeStereo();ReleaseStereoKey();if(navigationTimer!=null)navigationTimer.Dispose();controllerInput.Dispose();if(handoffTimer!=null)handoffTimer.Dispose();RemoveCurtain();RemoveSecondaryCurtain();if(closingProcess!=null)closingProcess.Dispose();if(launchedProcess!=null){launchedProcess.Dispose();launchedProcess=null;}}
- void PrepareStartup(){PrepareMenuAudio();ResetHubEvidence();startupOpening=!resumeLibrary;libraryMasked=true;Shown+=(s,e)=>{try{WindowRect r;GetWindowRect(Handle,out r);File.WriteAllText(Path.Combine(Storage.Folder,"startup-window.txt"),"Handle="+Handle+"; Bounds="+Bounds+"; Native="+r.Left+","+r.Top+","+r.Right+","+r.Bottom+"; Primary="+Screen.PrimaryScreen.Bounds+"; Current="+Screen.FromControl(this).Bounds+"; Focused="+ContainsFocus);}catch{}handoffClock.Restart();returnSince=0;BringToFront();Activate();SetForegroundWindow(Handle);RefreshFullscreenDetection();handoffTimer.Start();};}
+ void PrepareStartup(){if(library2D){Shown+=(s,e)=>Use2DLibrary();return;}PrepareMenuAudio();ResetHubEvidence();startupOpening=!resumeLibrary;libraryMasked=true;Shown+=(s,e)=>{try{WindowRect r;GetWindowRect(Handle,out r);File.WriteAllText(Path.Combine(Storage.Folder,"startup-window.txt"),"Handle="+Handle+"; Bounds="+Bounds+"; Native="+r.Left+","+r.Top+","+r.Right+","+r.Bottom+"; Primary="+Screen.PrimaryScreen.Bounds+"; Current="+Screen.FromControl(this).Bounds+"; Focused="+ContainsFocus);}catch{}handoffClock.Restart();returnSince=0;BringToFront();Activate();SetForegroundWindow(Handle);RefreshFullscreenDetection();handoffTimer.Start();};}
  void RestoreLibrary(LibraryResumeState state){
   filter=state.Filter;query=state.Query;page=state.Page;RefreshGames();
  selected=shown.FirstOrDefault(game=>game.Key==state.SelectedKey)??selected;
@@ -233,7 +243,13 @@ public partial class DepthWindow {
    }
    // Do not resize the capture target during activation: the Hub can take
    // several seconds to enable its lenses and resizing cancels that work.
-   if(elapsed>=15000){handoffTimer.Stop();RemoveCurtain();RemoveSecondaryCurtain();Hide();Close();MessageBox.Show("Odyssey did not activate 3D. dEPTH has closed and returned control to the desktop. No game was stopped. Restart Odyssey 3D Hub before trying again.","dEPTH: 3D unavailable",MessageBoxButtons.OK,MessageBoxIcon.Information);}return;
+   if(elapsed>=30000){
+    handoffTimer.Stop();WriteStartupDiagnostics();RemoveCurtain();RemoveSecondaryCurtain();Hide();
+    DialogResult choice=StartupRecovery("Odyssey 3D Hub has not confirmed conversion for this window. Check automatic SBS conversion, the Odyssey display and camera, then retry.\n\nOpen 2D library lets you configure and browse without waiting for Hub. Game conversion checks remain enabled.\n\nDiagnostic details: data/startup-diagnostics.txt");
+    if(choice==DialogResult.Ignore){Use2DLibrary();Show();BringToFront();Activate();}
+    else if(choice==DialogResult.Retry){ResetHubEvidence();handoffClock.Restart();returnSince=0;returnRefreshRetried=false;Show();BringToFront();Activate();RefreshFullscreenDetection();handoffTimer.Start();}
+    else Close();
+   }return;
   }
   if(activeGame==null)return;
   if(launchedProcess!=null&&activeGame.SteamId==""&&launchedProcess.HasExited){ReturnFromGame();return;}
@@ -268,12 +284,20 @@ public partial class DepthWindow {
     if(file.Length<hubEvidenceOffset)hubEvidenceOffset=0;file.Seek(Math.Max(hubEvidenceOffset,file.Length-16384),SeekOrigin.Begin);using(var reader=new StreamReader(file))hubTail=reader.ReadToEnd();
    }
   }catch{hubTail="";}}
-  int start=hubTail.LastIndexOf("Conversion Player started with arguments - Window: ",StringComparison.Ordinal);
-  if(start<0)return false;
-  string current=hubTail.Substring(start);
-  if(!current.StartsWith("Conversion Player started with arguments - Window: "+target.ToInt64()+" | isSideBySide: true",StringComparison.Ordinal))return false;
-  return current.LastIndexOf("LensOn!",StringComparison.Ordinal)>current.LastIndexOf("LensOff!",StringComparison.Ordinal);
+  return HubConversionEvidence(hubTail,target.ToInt64());
  }
+ internal static bool HubConversionEvidence(string tail,long target){
+  // Match only the newest conversion session, allowing Hub whitespace changes.
+  var sessions=Regex.Matches(tail??"",@"Conversion\s+Player\s+started\s+with\s+arguments\s*-\s*Window\s*:\s*(\d+)\s*\|\s*isSideBySide\s*:\s*(true|false)",RegexOptions.IgnoreCase);
+  if(sessions.Count==0)return false;var session=sessions[sessions.Count-1];long window;
+  if(!long.TryParse(session.Groups[1].Value,out window)||window!=target||!session.Groups[2].Value.Equals("true",StringComparison.OrdinalIgnoreCase))return false;
+  string current=tail.Substring(session.Index);return current.LastIndexOf("LensOn!",StringComparison.OrdinalIgnoreCase)>current.LastIndexOf("LensOff!",StringComparison.OrdinalIgnoreCase);
+ }
+ void WriteStartupDiagnostics(){try{
+  string text="dEPTH "+AppVersion+" | "+DateTime.Now.ToString("o")+Environment.NewLine+"Window: "+Handle+"; screen: "+Screen.FromControl(this).Bounds+Environment.NewLine+"Hub log readable: "+File.Exists(HubLogPath)+"; conversion evidence: "+HubConversionEvidence(hubTail,Handle.ToInt64())+"; fullscreen converter visible: "+ConversionWindowVisible()+Environment.NewLine+"Fresh Hub log tail:"+Environment.NewLine+hubTail;
+  File.WriteAllText(Path.Combine(Storage.Folder,"startup-diagnostics.txt"),text);
+ }catch{} }
+
  void ReturnFromGame(){
   if(restoring)return;restoring=true;
   try{

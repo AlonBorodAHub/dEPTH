@@ -28,7 +28,7 @@ public sealed class HeadTracking:IDisposable {
 }
 public partial class DepthWindow {
  readonly HeadTracking headTracker=new HeadTracking();float headX,headY;double headOriginX,headOriginY;bool headCentered;
- void UpdateHeadTracking(double dt){bool enabled=lib.HeadTracking&&activeGame==null&&!libraryMasked;headTracker.SetEnabled(enabled);double x,y;bool fresh=enabled&&headTracker.Read(out x,out y);float tx=0,ty=0;
+ void UpdateHeadTracking(double dt){bool enabled=lib.HeadTracking&&lib.Stereo&&activeGame==null&&!libraryMasked;headTracker.SetEnabled(enabled);double x,y;bool fresh=enabled&&headTracker.Read(out x,out y);float tx=0,ty=0;
   // Calibrate at acquisition; a lost face never leaves the scene stuck off-center.
   if(fresh){headTracker.Read(out x,out y);if(!headCentered){headOriginX=x;headOriginY=y;headCentered=true;}if(gpu!=null&&!libraryMasked&&introSince<0){tx=(float)Math.Max(-90,Math.Min(90,(x-headOriginX)*1.2));ty=(float)Math.Max(-65,Math.Min(65,-(y-headOriginY)*1.2));}}
   else headCentered=false;
